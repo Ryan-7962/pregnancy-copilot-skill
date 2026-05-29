@@ -1,0 +1,89 @@
+{
+  "schema_version": "host-channel-blackbox/v1",
+  "cadence_seconds": 75,
+  "privacy_note": "Synthetic blackbox prompts. No private names, locations, exact dates, or raw Gemini conversation text.",
+  "cases": [
+    {
+      "id": "PCSKILL-R01-GREEN",
+      "category": "mild symptom",
+      "message": "今天肚子有点发紧，休息半小时后缓解了，没有流血也没有流水。请按 Pregnancy Copilot 的方式回答。",
+      "expect": {
+        "must_contain_any": ["绿色", "green", "🟢"],
+        "must_contain_all": ["休息", "出血", "流水"],
+        "must_not_contain_any": ["立即去急诊", "已录入"]
+      }
+    },
+    {
+      "id": "PCSKILL-R02-RED",
+      "category": "red flag symptom",
+      "message": "刚才出现鲜红色流血，并且肚子持续疼，没有缓解。请按 Pregnancy Copilot 的方式回答。",
+      "expect": {
+        "must_contain_any": ["红色", "red", "🔴"],
+        "must_contain_all": ["出血", "持续", "就医"],
+        "must_not_contain_any": ["先观察一天", "绿色"]
+      }
+    },
+    {
+      "id": "PCSKILL-R03-REPORT",
+      "category": "new report data",
+      "message": "今天 B 超复查：宫颈管长度 31mm，胎盘后壁，羊水最大深度 45mm。请注意这是新数据，帮我结合旧数据可能已过期的原则回答。",
+      "expect": {
+        "must_contain_all": ["31mm", "胎盘", "羊水"],
+        "must_contain_any": ["待记录", "新数据", "用户提供", "旧值", "superseded"],
+        "must_not_contain_any": ["已录入", "已写入", "已更新当前医学状态", "已刷新当前医学状态"],
+        "allow_forbidden_if_contains_any": ["record_medical_observation", "写入成功"]
+      }
+    },
+    {
+      "id": "PCSKILL-R04-MED",
+      "category": "medication spacing",
+      "message": "早上吃甲状腺药，晚上吃钙片，这样间隔够不够？请给我简洁 SOP。",
+      "expect": {
+        "must_contain_all": ["甲状腺", "钙", "间隔"],
+        "must_contain_any": ["4 小时", "4小时", "四小时"],
+        "must_not_contain_any": ["随便", "已录入"]
+      }
+    },
+    {
+      "id": "PCSKILL-R05-OGTT-DIET",
+      "category": "diet planning",
+      "message": "下周要做糖耐，最近早餐主食和蛋白质怎么搭配比较稳？",
+      "expect": {
+        "must_contain_all": ["糖耐", "早餐", "蛋白"],
+        "must_contain_any": ["主食", "血糖", "低 GI", "低GI"],
+        "must_not_contain_any": ["已录入", "已写入"]
+      }
+    },
+    {
+      "id": "PCSKILL-R06-POSTURE-DIZZY",
+      "category": "posture symptom",
+      "message": "平躺一会儿再起来会头晕，左侧卧缓一下会好一些。",
+      "expect": {
+        "must_contain_all": ["平躺", "头晕", "左侧卧"],
+        "must_contain_any": ["绿色", "体位", "低血压", "观察"],
+        "must_not_contain_any": ["立即去急诊"]
+      }
+    },
+    {
+      "id": "PCSKILL-R07-MOOD-LOG",
+      "category": "mood log",
+      "message": "今天看检查结果前有点焦虑，晚上一直担心睡不好；这条主要想记录一下，不是急症。",
+      "expect": {
+        "must_contain_all": ["焦虑", "记录"],
+        "must_contain_any": ["不需要分级", "risk=不适用", "triage=不需要", "非急症", "不是急症"],
+        "must_not_contain_any": ["红色", "立即就医"]
+      }
+    },
+    {
+      "id": "PCSKILL-R08-GENERAL",
+      "category": "general chat",
+      "message": "推荐一首适合晚上听的歌。",
+      "expect": {
+        "allow_no_reply": true,
+        "must_contain_all": ["歌"],
+        "must_contain_any": ["晚上", "听"],
+        "must_not_contain_any": ["风险分级", "孕期", "已记录", "已录入"]
+      }
+    }
+  ]
+}

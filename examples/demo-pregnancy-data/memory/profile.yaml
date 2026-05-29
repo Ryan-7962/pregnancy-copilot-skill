@@ -1,0 +1,29 @@
+schema_version: "0.1"
+profile_name: "Demo Pregnancy Profile"
+display_name: "Demo User"
+baby_nickname: "小星星"
+due_date: null
+current_gestational_age: "8w2d"
+timezone: "Asia/Shanghai"
+region: "CN"
+hospital:
+  name: "示例医院"
+  city: "上海"
+  care_model: "中国大陆主要妇产科医院流程"
+preferences:
+  language: "zh-CN"
+  tone: "温柔、清晰、克制"
+  medical_disclaimer_level: "risk_based"
+  husband_share_default: "summary"
+privacy:
+  default_privacy_level: "summary"
+  require_confirmation_for_full_share: true
+medical_baseline:
+  high_risk_tags: []
+  allergies: []
+  medications: []
+  doctor_orders: []
+current_focus:
+  - "早孕期不适记录"
+  - "报告问题整理后问医生"
+  - "保持休息和情绪支持"

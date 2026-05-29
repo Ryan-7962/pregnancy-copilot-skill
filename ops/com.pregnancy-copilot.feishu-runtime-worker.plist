@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.pregnancy-copilot.feishu-runtime-worker</string>
+
+  <key>WorkingDirectory</key>
+  <string>/path/to/pregnancy-copilot</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/path/to/pregnancy-copilot/.venv/bin/python</string>
+    <string>scripts/run_feishu_runtime_worker.py</string>
+    <string>--profile</string>
+    <string>&lt;lark-cli-profile&gt;</string>
+    <string>--chat-id</string>
+    <string>&lt;feishu-chat-id&gt;</string>
+    <string>--bot-app-id</string>
+    <string>&lt;feishu-bot-app-id&gt;</string>
+    <string>--data-root</string>
+    <string>/path/to/pregnancy-copilot/pregnancy-data</string>
+    <string>--state-file</string>
+    <string>/path/to/pregnancy-copilot/pregnancy-data/runtime/feishu-seen-message-ids.json</string>
+    <string>--interval</string>
+    <string>3</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PYTHONPATH</key>
+    <string>src</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/path/to/pregnancy-copilot/pregnancy-data/runtime/feishu-runtime-worker.launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>/path/to/pregnancy-copilot/pregnancy-data/runtime/feishu-runtime-worker.launchd.err</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+</dict>
+</plist>

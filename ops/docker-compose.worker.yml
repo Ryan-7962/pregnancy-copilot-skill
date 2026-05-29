@@ -1,0 +1,31 @@
+# Example Docker Compose service for running Pregnancy Copilot as a persistent worker.
+#
+# Copy this service into the host machine's compose file and adjust:
+# - build/context or image
+# - volume paths
+# - Lark CLI config mount
+# - profile name
+#
+# The important part is that the worker runs without --max-events and uses a
+# persistent data-root outside /tmp.
+
+services:
+  pregnancy-copilot-worker:
+    build:
+      context: ..
+    working_dir: /app
+    command:
+      - /app/.venv/bin/python
+      - scripts/run_feishu_event_loop.py
+      - --profile
+      - ${PREGNANCY_COPILOT_LARK_PROFILE:-pregnancy-bot}
+      - --data-root
+      - /data/pregnancy-data
+    environment:
+      PYTHONPATH: /app/src
+      PATH: /root/.local/bin:/usr/local/bin:/usr/bin:/bin
+    volumes:
+      - ${PREGNANCY_COPILOT_DATA_ROOT:-./pregnancy-data}:/data/pregnancy-data
+      - ${LARK_CLI_HOME:-~/.lark-cli}:/root/.lark-cli:ro
+    restart: unless-stopped
+

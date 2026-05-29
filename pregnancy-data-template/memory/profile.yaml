@@ -1,0 +1,34 @@
+schema_version: "0.1"
+profile_name: "Example Pregnancy Profile"
+display_name: "孕妇"
+baby_nickname: "宝宝"
+due_date: null
+current_gestational_age: "20w0d"
+timezone: "Asia/Shanghai"
+region: "CN"
+hospital:
+  name: "示例医院"
+  city: "上海"
+  care_model: "中国大陆主要妇产科医院流程"
+preferences:
+  language: "zh-CN"
+  tone: "温柔、清晰、克制"
+  medical_disclaimer_level: "risk_based"
+  response_style:
+    enabled: false
+    preset: "neutral_clinical"
+  partner_share_default: "private"
+  husband_share_default: "private"
+privacy:
+  default_privacy_level: "summary"
+  require_confirmation_for_full_share: true
+medical_baseline:
+  high_risk_tags: []
+  allergies: []
+  medications: []
+  doctor_orders: []
+current_focus:
+  - "20 周大排畸"
+  - "胎盘位置"
+  - "宫颈长度"
+  - "睡眠和焦虑"

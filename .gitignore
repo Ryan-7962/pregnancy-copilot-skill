@@ -1,0 +1,30 @@
+# Secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Private pregnancy data
+pregnancy-data/
+docs/private/
+gemini 案例/
+*.private.md
+PRIVATE_NOTES.md
+.releaseignore.local
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Backups
+*.zip
+*.diff

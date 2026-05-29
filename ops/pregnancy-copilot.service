@@ -1,0 +1,17 @@
+[Unit]
+Description=Pregnancy Copilot Feishu Event Loop
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/pregnancy-copilot
+Environment=PYTHONPATH=/opt/pregnancy-copilot/src
+Environment=PATH=/opt/data/home/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/opt/pregnancy-copilot/.venv/bin/python scripts/run_feishu_event_loop.py --profile pregnancy-bot --data-root /opt/data/home/pregnancy-data
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+

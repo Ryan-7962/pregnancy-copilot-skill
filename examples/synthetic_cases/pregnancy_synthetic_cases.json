@@ -1,0 +1,132 @@
+{
+  "schema_version": "synthetic-cases/v1",
+  "privacy_note": "These are fully synthetic test cases inspired by broad usage patterns. They contain no raw private conversation text, names, exact locations, exact dates, or personal identifiers.",
+  "cases": [
+    {
+      "id": "symptom_green_abdominal_tightness_rest_relief",
+      "pattern": "mild abdominal tightness that resolves with rest and explicitly denies red flags",
+      "message": "今天肚子有点发紧，休息半小时后缓解了，没有流血也没有流水。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:10:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "medical_triage",
+        "triage_required": true,
+        "risk_level": "green",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "symptom_red_bleeding_with_persistent_pain",
+      "pattern": "bleeding plus persistent abdominal pain",
+      "message": "刚才出现鲜红色流血，并且肚子持续疼，没有缓解。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:11:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "medical_triage",
+        "triage_required": true,
+        "risk_level": "red",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "report_review_cervical_length_followup",
+      "pattern": "new ultrasound report data that should be treated as a report review",
+      "message": "今天 B 超复查：宫颈管长度 31mm，胎盘后壁，羊水最大深度 45mm。帮我结合之前记录看下要注意什么。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:12:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "report_review",
+        "triage_required": false,
+        "risk_level": "not_applicable",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "medication_spacing_thyroid_and_calcium",
+      "pattern": "supplement or medication spacing question",
+      "message": "早上吃甲状腺药，晚上吃钙片，这样间隔够不够？",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:13:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "medication",
+        "triage_required": true,
+        "risk_level": "green",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "diet_glucose_ogtt_preparation",
+      "pattern": "diet and glucose management planning",
+      "message": "下周要做糖耐，最近早餐主食和蛋白质怎么搭配比较稳？",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:14:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "report_review",
+        "triage_required": false,
+        "risk_level": "not_applicable",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "posture_dizziness_after_lying_down",
+      "pattern": "posture-related dizziness during pregnancy",
+      "message": "平躺一会儿再起来会头晕，左侧卧缓一下会好一些。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:15:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "medical_triage",
+        "triage_required": true,
+        "risk_level": "green",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "mood_anxiety_without_medical_symptom",
+      "pattern": "anxiety or emotional support without acute medical symptoms",
+      "message": "今天看检查结果前有点焦虑，晚上一直担心睡不好。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:16:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "mood_support",
+        "triage_required": false,
+        "risk_level": "not_applicable",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "daily_log_food_weight_walk",
+      "pattern": "ordinary pregnancy daily log",
+      "message": "今天体重 51kg，早餐吃了鸡蛋牛奶和全麦面包，晚饭后散步 20 分钟。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:17:00+08:00",
+      "expected": {
+        "handled": true,
+        "intent": "pregnancy_log",
+        "triage_required": false,
+        "risk_level": "not_applicable",
+        "host_action_type": "answer_with_context_package"
+      }
+    },
+    {
+      "id": "general_chat_pass_through",
+      "pattern": "non-pregnancy general chat should stay with host agent",
+      "message": "推荐一首适合晚上听的歌。",
+      "channel": "agent_default",
+      "timestamp": "2026-05-16T20:18:00+08:00",
+      "expected": {
+        "handled": false,
+        "intent": "general_chat",
+        "triage_required": false,
+        "risk_level": "not_applicable",
+        "host_action_type": "pass_through"
+      }
+    }
+  ]
+}
