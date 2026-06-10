@@ -1,10 +1,10 @@
 # v0.1 Status and Gaps
 
-Date: 2026-05-05
+Date: 2026-06-10
 
 ## Current Completion Estimate
 
-Engineering completion for the planned v0.1 skeleton is about 95%.
+Engineering completion for the planned v0.1 skeleton is about 97%.
 
 Product completion compared with the full original Pregnancy Copilot vision is about 35-45%.
 
@@ -45,6 +45,8 @@ The current version is a usable local-first skill skeleton, not yet a full pregn
 - Return `handled=false` for ordinary host-Agent chat so Hermes/OpenClaw can answer normally.
 - Show red/yellow/green only when `triage_required=true`; pregnancy logs, mood support, and diary entries use `risk_level=not_applicable` and no longer get a visible green-light reply.
 - Record structured medical observations and regenerate `memory/current_medical_state.yaml` so newer B 超/化验/医嘱 values supersede older stale values while preserving the full history.
+- Generate a pre-visit doctor discussion SOP from current medical state, recent daily metrics, recent non-private risk/report events, and active doctor questions.
+- Save post-visit doctor notes and generate a post-visit action SOP with action/follow-up/uncertain-item sections.
 
 ## What Is Still Not Done for v0.1 Product Polish
 
@@ -66,11 +68,14 @@ These are not blockers for a technical v0.1 skeleton, but they matter before cal
    - Group chat events are not yet claimed as supported until group message event scopes/config are verified.
    - There is no guided auth setup wizard.
 
-3. Doctor question lifecycle is basic but usable.
+3. Doctor question and visit SOP lifecycle is basic but usable.
    - Questions are extracted into `doctor_questions/questions.jsonl`.
    - Explicit `#产检问题` messages are added to the same list.
    - Status tracking supports `open / asked / answered / archived`.
+   - `scripts/generate_pre_visit_sop.py` creates a Markdown package for the next doctor visit.
+   - `scripts/generate_post_visit_sop.py` saves doctor notes and creates a next-stage action SOP.
    - There is not yet a polished Feishu UI for updating statuses.
+   - There is not yet calendar/reminder integration for the generated follow-ups.
 
 4. Partner summary is generated locally but not part of the default v0.1 path.
    - Summary template exists.
@@ -141,7 +146,7 @@ Current v0.1 delivers the foundation:
 - Feishu adapter shape
 - history import drafts
 - basic artifacts
-- doctor question status tracking
+- doctor question status tracking and basic visit SOP artifacts
 - privacy-first release packaging
 
 It does not yet deliver the full product experience:

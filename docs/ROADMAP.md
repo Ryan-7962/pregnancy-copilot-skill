@@ -27,6 +27,7 @@
 - emotional_pattern 自动生成
 - daily_metrics 高频日常指标索引
 - doctor_questions 生命周期管理
+- 产检前/检查后 SOP 基础 Markdown 生成
 - SQLite 可选存储
 
 ## v0.3：产检计划与提醒
@@ -36,7 +37,7 @@
 - 飞书多维表格产检日历
 - 用药提醒
 - 体重/血糖/血压事件管理
-- 产检前 SOP 自动生成
+- 产检前/后 SOP 与日历、提醒、问题状态流转联动
 
 ## v0.4：更多消息通道
 

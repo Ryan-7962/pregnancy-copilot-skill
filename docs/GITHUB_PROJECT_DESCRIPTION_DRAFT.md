@@ -72,7 +72,7 @@ Pregnancy Copilot Skill 想解决的是这个长期问题。
 
 它不是医生，也不是医疗器械。它的目标是帮助孕妇和家庭更理性、更结构化地面对孕期焦虑：该记录的记录，该复查的复查，该问医生的问医生，普通焦虑则用更完整的上下文来解释。
 
-## 当前 v0.1.7 可以公开承诺的能力
+## 当前 v0.1.8 可以公开承诺的能力
 
 - 初始化本地 `pregnancy-data/` 目录和基础档案模板。
 - 保存原始聊天输入和结构化孕期事件。
@@ -97,7 +97,7 @@ Pregnancy Copilot Skill 想解决的是这个长期问题。
 
 ## 通道表达建议
 
-飞书/Lark CLI 是当前 v0.1.7 测试最完整的通道适配器，但不是产品边界。
+飞书/Lark CLI 是当前 v0.1.8 测试最完整的通道适配器，但不是产品边界。
 
 更准确的表达是：
 
@@ -118,9 +118,9 @@ It is not a standalone app, a medical device, or a replacement for obstetric car
 
 The core problem is not one-off pregnancy Q&A. The harder problem is long-running pregnancy context: medical values change, old report findings may be resolved, symptoms and daily notes are scattered, and switching models or chat channels can break continuity.
 
-v0.1.7 can initialize a local `pregnancy-data/` folder, store raw messages and structured events, maintain current-vs-historical medical observations, build a context package for the host Agent, track daily metrics, apply conditional red/yellow/green safety prompts for symptom or abnormal-report messages, and generate basic family artifacts such as daily logs, doctor questions, and baby weekly diary material.
+v0.1.8 can initialize a local `pregnancy-data/` folder, store raw messages and structured events, maintain current-vs-historical medical observations, build a context package for the host Agent, track daily metrics, apply conditional red/yellow/green safety prompts for symptom or abnormal-report messages, and generate basic family artifacts such as daily logs, doctor questions, visit SOPs, and baby weekly diary material.
 
-Feishu/Lark CLI is the most tested channel adapter in v0.1.7, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
+Feishu/Lark CLI is the most tested channel adapter in v0.1.8, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
 
 ## Suggested GitHub Topics
 

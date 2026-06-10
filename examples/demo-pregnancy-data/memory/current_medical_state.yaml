@@ -1,0 +1,24 @@
+schema_version: '0.1'
+generated_at: '2026-06-10T13:13:31.967678+08:00'
+metrics:
+  crl:
+    display_name: 头臀长 CRL
+    current:
+      display_name: 头臀长 CRL
+      interpretation: 示例报告值，仅用于演示如何记录最新检查指标。
+      measured_at: '2026-05-05'
+      metric_key: crl
+      observation_id: demo-obs-crl-20260505
+      raw_source_path: reports/demo-ultrasound.md
+      recorded_at: '2026-06-10T13:13:31.967361+08:00'
+      schema_version: '0.1'
+      source_event_id: demo-yellow-001
+      status: normal
+      unit: mm
+      value: '18'
+    previous_values: []
+open_watch_items: []
+resolved_items: []
+principle: Current decisions must prefer metrics.current over older previous_values;
+  previous_values are historical and superseded unless explicitly reactivated by a
+  newer observation.

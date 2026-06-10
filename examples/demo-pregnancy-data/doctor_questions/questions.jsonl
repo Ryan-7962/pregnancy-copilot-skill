@@ -1,0 +1,1 @@
+{"schema_version":"0.1","question_id":"demo-dq-001","question":"这个 B 超数值在当前孕周是否需要复查？","status":"open","created_at":"2026-05-05T15:30:00+08:00","updated_at":"2026-05-05T15:30:00+08:00","source_event_id":"demo-yellow-001","source":"demo","raw_source_path":"reports/demo-ultrasound.md","gestational_age":"8w2d","risk_level":"yellow","answer_summary":null}

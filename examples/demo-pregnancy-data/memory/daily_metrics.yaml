@@ -1,0 +1,18 @@
+schema_version: '0.1'
+generated_at: '2026-06-10T13:13:31.998078+08:00'
+principle: Daily metrics are extracted summaries for quick context. Source events
+  remain the audit trail; do not infer missing daily values.
+days:
+  '2026-05-05':
+    date: '2026-05-05'
+    weight: null
+    mood_entries:
+    - event_id: demo-dad-001
+      summary: 今天陪她整理产检问题，她有点担心，我负责把问题写下来。
+    diet_entries: []
+    activity_entries: []
+    sleep_entries: []
+weight_trend:
+  latest: null
+  previous: null
+  delta_kg: null

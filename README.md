@@ -1,7 +1,7 @@
 # Pregnancy Copilot Skill
 
-> Version: v0.1.7 handoff package  
-> Date: 2026-05-29  
+> Version: v0.1.8 handoff package  
+> Date: 2026-06-10  
 > Status: Pre-release Agent Skill, ready for external tester review after owner approval
 
 ![Pregnancy Copilot Skill infographic](assets/pregnancy-copilot-infographic.png)
@@ -41,9 +41,9 @@ Pregnancy Copilot Skill 就是基于这些真实使用习惯和痛点整理出�
 
 Pregnancy Copilot Skill 想解决的是这个长期问题：让 AI 不再失忆、不再混淆旧报告和新报告，并把每一次有价值的孕期对话沉淀成可迁移、可复盘、可继续使用的本地档案。
 
-## v0.1.7 目前能做什么
+## v0.1.8 目前能做什么
 
-v0.1.7 是可测试的 Agent Skill 骨架，不是完整消费级 App。当前已经实现并有测试覆盖的能力包括：
+v0.1.8 是可测试的 Agent Skill 骨架，不是完整消费级 App。当前已经实现并有测试覆盖的能力包括：
 
 - 初始化本地 `pregnancy-data/` 目录和 `profile.yaml`。
 - 首次建档门禁：缺少关键孕期信息时，先要求补充基础档案/最近报告。
@@ -52,7 +52,7 @@ v0.1.7 是可测试的 Agent Skill 骨架，不是完整消费级 App。当前�
 - 维护 `memory/current_medical_state.yaml`：同一医学指标有新值时，新值成为 current，旧值保留为历史。
 - 记录体重、睡眠、心情、饮食、运动等日常高频数据到 `memory/daily_metrics.yaml`。
 - 对症状、异常报告或需要医生确认的线索提供红 / 黄 / 绿安全提示；普通闲聊不会被医疗化。
-- 生成下次产检问题清单、日常日志、宝宝周记素材和可选伴侣 summary。
+- 生成下次产检问题清单、产检前问诊 SOP、检查后行动 SOP、日常日志、宝宝周记素材和可选伴侣 summary。
 - 提供 Host Runtime，便于 Hermes/OpenClaw/Codex/Claude Code 等宿主 Agent 调用。
 - 提供飞书/Lark CLI 适配器和确定性 runtime worker，方便当前版本测试真实聊天通道。
 - 提供公开合成案例测试，不包含真实隐私数据。
@@ -73,11 +73,10 @@ v0.1.7 是可测试的 Agent Skill 骨架，不是完整消费级 App。当前�
 
 ## 接下来希望补齐的方向
 
-这些是项目方向，不是 v0.1.7 已完整实现的承诺。欢迎试用者一起提 issue 或 PR：
+这些是项目方向，不是 v0.1.8 已完整实现的承诺。欢迎试用者一起提 issue 或 PR：
 
 - **产检日历与提醒**：根据孕周和医院流程生成检查日历，提醒下一次产检、糖耐、B 超、复查、用药等事项。
-- **产检前问诊 SOP**：结合近期症状、日常数据、历史异常和医生待问问题，自动生成“这次去医院要问什么”的清单。
-- **检查后行动 SOP**：把医生回复、检查结果和新的注意事项整理成下一阶段行动计划，例如复查、饮食、运动、用药、观察指标。
+- **更强产检 SOP**：当前已有基础 Markdown 生成；后续希望接入日历、提醒、医生问题状态流转和报告结构化更新。
 - **更强报告录入**：支持更稳定的 OCR/报告结构化，把 B 超、血常规、尿检、糖耐等报告转成可更新的医学状态。
 - **更多聊天通道**：在飞书/Lark 之外，探索微信、Telegram、Slack、Discord、Web UI 或宿主 Agent 默认聊天入口。
 - **更低门槛安装**：减少技术用户配置成本，让普通家庭更容易使用。
@@ -96,9 +95,9 @@ The core problem is not one-off pregnancy Q&A. Many general LLMs can answer simp
 - switching models, accounts, or chat channels can break continuity;
 - pregnancy data is sensitive health data and should be controlled by the family by default.
 
-v0.1.7 can initialize a local `pregnancy-data/` folder, store raw messages and structured events, maintain current-vs-historical medical observations, build a current context package for the host Agent, track daily metrics, apply conditional red/yellow/green safety prompts for symptom or abnormal-report messages, and generate basic family artifacts such as daily logs, doctor questions, and baby weekly diary material. Planned directions include prenatal-visit calendars, reminders, pre-visit question SOPs, post-visit action SOPs, stronger report parsing, and more chat channels.
+v0.1.8 can initialize a local `pregnancy-data/` folder, store raw messages and structured events, maintain current-vs-historical medical observations, build a current context package for the host Agent, track daily metrics, apply conditional red/yellow/green safety prompts for symptom or abnormal-report messages, and generate basic family artifacts such as daily logs, doctor questions, pre-visit SOPs, post-visit action SOPs, and baby weekly diary material. Planned directions include prenatal-visit calendars, reminders, stronger report parsing, and more chat channels.
 
-Feishu/Lark CLI is the most tested channel adapter in v0.1.7, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
+Feishu/Lark CLI is the most tested channel adapter in v0.1.8, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
 
 ## 它不做什么
 
@@ -140,7 +139,7 @@ Feishu/Lark CLI is the most tested channel adapter in v0.1.7, but it is not the 
 7. **Artifacts matter**  
    AI 不只是回答问题，还要把孕期数据变成家庭回忆作品。
 
-## v0.1.7 默认部署
+## v0.1.8 默认部署
 
 - 推荐路径：Hermes/OpenClaw 主 Agent 调用 Host Agent Runtime，并把孕妇常用聊天窗口或机器人作为入口
 - 当前测试拓扑：宿主 Agent 的默认聊天通道先视作孕妇自己的对话入口；飞书、微信等只是可替换网关
@@ -163,7 +162,9 @@ Feishu/Lark CLI is the most tested channel adapter in v0.1.7, but it is not the 
 
 注意：飞书机器人本身不会自动回复。推荐让 Hermes/OpenClaw 接收孕妇侧窗口/机器人消息后调用 `pregnancy_copilot.host_runtime.process_host_message`。如果不走 host runtime，则必须有 `scripts/run_feishu_event_loop.py` 常驻运行。P2P smoke test 只证明“临时 event loop 启动时能跑通”，不代表机器人已经 24/7 连接到 Hermes。
 
-v0.1.7 增加首次建档门禁：如果 `profile.yaml` 仍是模板或缺关键孕期锚点，非红色急症消息只保存 inbox 原文，并要求用户先提供基础档案/最近报告，不写入正式医疗事件，也不展示红黄绿判断。收到明确“建档信息”后，会更新 `profile.yaml`，并把 NT、CRL、胎心、胎盘位置等初始报告摘录写入 `events/medical_observations.jsonl`。若宿主 Agent 对 skill 提示遵循不稳定，可用 `scripts/run_feishu_runtime_worker.py` 做确定性飞书测试：它会直接调用 runtime 并把 `reply_text` 原样发回。
+v0.1.7 起增加首次建档门禁：如果 `profile.yaml` 仍是模板或缺关键孕期锚点，非红色急症消息只保存 inbox 原文，并要求用户先提供基础档案/最近报告，不写入正式医疗事件，也不展示红黄绿判断。收到明确“建档信息”后，会更新 `profile.yaml`，并把 NT、CRL、胎心、胎盘位置等初始报告摘录写入 `events/medical_observations.jsonl`。若宿主 Agent 对 skill 提示遵循不稳定，可用 `scripts/run_feishu_runtime_worker.py` 做确定性飞书测试：它会直接调用 runtime 并把 `reply_text` 原样发回。
+
+v0.1.8 增加产检前/后 SOP 基础闭环：产检前可把当前医学状态、近期日常指标、近期风险事件和待问医生问题整理成 `reports/visit_sops/pre_visit_YYYY-MM-DD.md`；检查后可把医生原文保存到 `reports/doctor_visit_notes/`，并生成 `reports/visit_sops/post_visit_YYYY-MM-DD.md`。这只是归档和拆解工具，不替代医生判断，也不会自动把医生回复改写成新的医学指标；新指标仍需通过结构化 observation 写入。
 
 ## 通信通道
 
@@ -178,7 +179,7 @@ Pregnancy Copilot Skill 不绑定某一个聊天工具。
   -> 本地 pregnancy-data 记忆目录
 ```
 
-飞书/Lark CLI 是 v0.1.7 当前测试最完整的通道适配器，适合桌面调试、机器人测试和开发验收。实际使用时，用户可以根据宿主 Agent 的能力选择入口：
+飞书/Lark CLI 是 v0.1.8 当前测试最完整的通道适配器，适合桌面调试、机器人测试和开发验收。实际使用时，用户可以根据宿主 Agent 的能力选择入口：
 
 - 飞书 / Lark：当前版本最完整的测试通道。
 - 微信：更贴近日常孕妇使用习惯；如果 Hermes/OpenClaw 等宿主 Agent 已支持微信入口，可以把微信消息转给 Host Runtime。需要注意微信通道本身可能存在消息限制、稳定性和第三方接入约束。
@@ -279,7 +280,7 @@ PYTHONPATH=src .venv/bin/python scripts/run_feishu_p2p_smoke_test.py \
 
 发布到 GitHub 前，先阅读 `docs/GITHUB_RELEASE.md`。不要从本地 handoff 目录直接发布；应先构建干净 release 目录并通过 `scripts/release_check.py`。
 公开安装指南见 `INSTALL.md`。
-v0.1.7 发布说明见 `docs/PUBLIC_RELEASE_NOTES_v0.1.7.md`。
+v0.1.8 发布说明见 `docs/PUBLIC_RELEASE_NOTES_v0.1.8.md`。
 记忆系统说明见 `docs/MEMORY_SYSTEM.md`。
 隐私与角色模型见 `docs/PRIVACY_AND_ROLES.md`。
 当前完成度与缺口见 `docs/V0_1_STATUS_AND_GAPS.md`。
@@ -339,6 +340,24 @@ PYTHONPATH=src .venv/bin/python scripts/run_host_channel_acceptance.py \
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/run_synthetic_case_acceptance.py \
   --data-root /tmp/pregnancy-copilot-synthetic-cases
+```
+
+生成产检前问诊 SOP：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/generate_pre_visit_sop.py \
+  --data-root ./pregnancy-data \
+  --date 2026-05-22 \
+  --lookback-days 14
+```
+
+生成检查后行动 SOP：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/generate_post_visit_sop.py \
+  --data-root ./pregnancy-data \
+  --date 2026-05-22 \
+  --text "医生说继续观察，下次两周后复查 B 超。每天记录腹痛和出血情况。"
 ```
 
 合成案例位于 `examples/synthetic_cases/pregnancy_synthetic_cases.json`。它们来自私密真实使用模式的人工泛化，不包含原文、姓名、地点、精确日期或账号信息，只用于测试 skill 行为。

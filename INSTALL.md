@@ -1,4 +1,4 @@
-# Pregnancy Copilot Skill v0.1.7 Install Guide
+# Pregnancy Copilot Skill v0.1.8 Install Guide
 
 This guide is for public testers who receive the zip package or clone the GitHub repository.
 
@@ -195,7 +195,29 @@ Important: a Feishu bot will not reply unless a host Agent or event loop is actu
 
 See `docs/HERMES_QUICKSTART.md` and `docs/USER_TESTING.md`.
 
-## 6. Medical Safety Boundary
+## 6. Visit SOPs
+
+Generate a pre-visit doctor discussion SOP:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/generate_pre_visit_sop.py \
+  --data-root ./pregnancy-data \
+  --date 2026-05-22 \
+  --lookback-days 14
+```
+
+Generate a post-visit action SOP from doctor notes:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/generate_post_visit_sop.py \
+  --data-root ./pregnancy-data \
+  --date 2026-05-22 \
+  --text "医生说继续观察，下次两周后复查 B 超。每天记录腹痛和出血情况。"
+```
+
+These files are local organization aids. They do not replace the doctor's original judgment, and they do not automatically overwrite structured medical observations.
+
+## 7. Medical Safety Boundary
 
 This skill is not a doctor, hospital, diagnosis engine, prescription tool, or emergency service.
 
@@ -203,9 +225,9 @@ For bleeding, fluid leakage, severe abdominal pain, fainting, obvious reduced fe
 
 The host model should use medical sources and local clinical guidance when giving advice. The skill's deterministic layer is only a safety floor and memory substrate.
 
-## 7. Privacy Boundary
+## 8. Privacy Boundary
 
-Default v0.1.7 is pregnant-user-first:
+Default v0.1.8 is pregnant-user-first:
 
 - The pregnant user owns the data.
 - A technical partner may install the skill and channel, but partner access is not automatic consent.
@@ -221,7 +243,7 @@ Never publish:
 - `.env`
 - local virtual environments
 
-## 8. Backup Before Upgrade
+## 9. Backup Before Upgrade
 
 Before changing versions or running migrations:
 

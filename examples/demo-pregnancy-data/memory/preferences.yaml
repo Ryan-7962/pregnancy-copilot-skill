@@ -1,0 +1,7 @@
+schema_version: "0.1"
+tone: "温柔、清晰、克制"
+partner_share_default: "private"
+husband_share_default: "private"
+require_confirmation_for_full_share: true
+baby_diary_frequency: "weekly"
+baby_nickname: "宝宝"

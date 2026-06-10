@@ -4,9 +4,9 @@ This guide is for running Pregnancy Copilot as a reusable local-first skill behi
 
 Important: a Feishu bot is only the message shell. It will reply only when a Pregnancy Copilot event loop is running for that bot profile, or when Hermes/OpenClaw routes that bot's events into this skill.
 
-## Verified v0.1.7 Path
+## Verified v0.1.8 Path
 
-v0.1.7 is verified for:
+v0.1.8 is verified for:
 
 - Host Agent Runtime calls from a Hermes/OpenClaw-style parent Agent
 - Feishu P2P bot chat while the event loop is running

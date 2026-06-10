@@ -461,6 +461,48 @@ Expected files:
 
 Private events are represented as placeholders. Baby diary output is creative writing only and must not imply medical normality or fetal health.
 
+## 5.3 Generate Visit SOPs
+
+Generate a pre-visit doctor discussion SOP:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/generate_pre_visit_sop.py \
+  --data-root ./pregnancy-data \
+  --date 2026-05-22 \
+  --lookback-days 14
+```
+
+Expected file:
+
+```text
+pregnancy-data/reports/visit_sops/pre_visit_2026-05-22.md
+```
+
+It should include:
+
+- current values from `memory/current_medical_state.yaml`,
+- recent non-private daily metrics,
+- recent report/risk events,
+- active doctor questions.
+
+Generate a post-visit action SOP from doctor notes:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/generate_post_visit_sop.py \
+  --data-root ./pregnancy-data \
+  --date 2026-05-22 \
+  --text "医生说继续观察，下次两周后复查 B 超。每天记录腹痛和出血情况。"
+```
+
+Expected files:
+
+```text
+pregnancy-data/reports/doctor_visit_notes/2026-05-22.md
+pregnancy-data/reports/visit_sops/post_visit_2026-05-22.md
+```
+
+The post-visit SOP is a local summary of doctor notes. It does not automatically create or overwrite medical observations; confirmed report values should still be recorded through `scripts/record_medical_observation.py`.
+
 ## 6. Import Historical Gemini/Kortex Export
 
 Keep real exports outside git. Zip files are ignored by `.gitignore`.

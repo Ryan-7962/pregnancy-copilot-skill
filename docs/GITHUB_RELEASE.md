@@ -4,7 +4,7 @@ This repository should be published from a clean release directory, not from the
 
 The local handoff folder may contain private source material such as `docs/private/`, raw Gemini cases, local virtual environments, and historical zip packages. Those files are intentionally excluded from the release package.
 
-Current public version target: `v0.1.7`.
+Current public version target: `v0.1.8`.
 
 ## Public Positioning To Use On GitHub
 
@@ -77,7 +77,7 @@ PYTHONPATH=src .venv/bin/python scripts/release_check.py \
 cd /tmp/pregnancy-copilot-skill-release
 git init
 git add .
-git commit -m "Release Pregnancy Copilot Skill v0.1.7"
+git commit -m "Release Pregnancy Copilot Skill v0.1.8"
 ```
 
 ## 4. Publish
@@ -96,13 +96,13 @@ Recommended initial repository settings:
 - enable secret scanning if available,
 - protect `main` after the first push,
 - keep real pregnancy data out of issues and discussions,
-- publish v0.1.7 as a pre-release until more external testers validate host-Agent integration.
+- publish v0.1.8 as a pre-release until more external testers validate host-Agent integration.
 
-## 5. Tag v0.1.7
+## 5. Tag v0.1.8
 
 ```bash
-git tag -a v0.1.7 -m "Pregnancy Copilot Skill v0.1.7"
-git push origin v0.1.7
+git tag -a v0.1.8 -m "Pregnancy Copilot Skill v0.1.8"
+git push origin v0.1.8
 ```
 
 Attach the checked zip package only if it was built from the clean release directory and passes `scripts/release_check.py`.
