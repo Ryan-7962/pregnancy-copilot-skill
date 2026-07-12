@@ -84,6 +84,7 @@ def test_host_runtime_returns_context_package_for_handled_pregnancy_message(tmp_
 
 
 def test_host_runtime_omits_context_package_for_general_chat(tmp_path):
+    make_profile_ready(tmp_path)
     result = process_host_message(
         HostMessageRequest(
             text="推荐一首歌",

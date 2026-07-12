@@ -88,25 +88,12 @@ def process_host_message(
     triage_advisor: TriageAdvisor | None = None,
     response_provider: LLMProvider | None = None,
 ) -> HostMessageResult:
-    intent = classify_intent(request.text)
-    if not intent.handled_by_skill:
-        return HostMessageResult(
-            reply_text="",
-            event=None,
-            risk_level="not_applicable",
-            event_id="",
-            mode="general_chat",
-            privacy_level="not_applicable",
-            handled=False,
-            intent=intent.intent,
-            triage_required=False,
-            host_action=build_host_action(request, handled=False),
-        )
     initialize_data_dir(data_root)
     store = PregnancyDataStore(data_root)
     adapter = HostAgentAdapter()
     payload = build_host_payload(request)
     readiness = check_profile_readiness(data_root)
+    intent = classify_intent(request.text)
     pre_triage = triage_message(request.text, advisor=triage_advisor) if intent.triage_required else None
     if readiness["status"] != "ready" and (not pre_triage or pre_triage.risk_level != "red"):
         message = adapter.receive_message(payload)
@@ -191,6 +178,19 @@ def process_host_message(
             context_package=context_package,
             host_action=build_collect_profile_action(request, reply_text),
         )
+    if not intent.handled_by_skill:
+        return HostMessageResult(
+            reply_text="",
+            event=None,
+            risk_level="not_applicable",
+            event_id="",
+            mode="general_chat",
+            privacy_level="not_applicable",
+            handled=False,
+            intent=intent.intent,
+            triage_required=False,
+            host_action=build_host_action(request, handled=False),
+        )
     event = process_feishu_event(
         payload,
         store=store,
@@ -271,7 +271,7 @@ def build_onboarding_reply(readiness: dict) -> str:
     missing_text = "、".join(missing) if missing else "基础档案"
     return (
         "先完成孕期建档，再进入正式问答。\n\n"
-        "我目前还不能把示例档案当作真实医学背景使用，需要你先补充或确认：\n"
+        "我还不了解你的具体孕期情况。为了让后续回答基于你的真实背景，而不是通用猜测，请先提供目前已有的信息：\n"
         "1. 孕妇基础信息：年龄/出生年、身高、孕前体重、当前体重、所在城市。\n"
         "2. 孕期锚点：末次月经 LMP、预产期 EDD，或当前孕周。\n"
         "3. 就诊信息：医院、下次产检时间、主要医生或科室。\n"
@@ -279,7 +279,9 @@ def build_onboarding_reply(readiness: dict) -> str:
         "5. 既往需要长期记住的红黄项：出血/流液史、宫颈问题、胎盘问题、用药、过敏、医生禁忌。\n"
         "6. 偏好：回答语言、语气、是否需要严格医学审计、是否允许同步给家人。\n\n"
         f"当前待补字段：{missing_text}\n\n"
-        "你可以直接发一段“建档信息”，也可以先发最近一次产检报告文字。我会先按来源可信度记录，不会把未核实内容当成报告事实。"
+        "隐私说明：这些资料只保存在你指定的本地 pregnancy-data 目录，Skill 不会主动上传或分享；是否经过聊天平台或宿主模型，由你使用的 Agent 和通道决定。\n\n"
+        "真实性要求：请按产检报告原文录入数值、单位、日期和医生结论，不要凭印象补全。不知道或没有的数据直接写“未知/未检查/暂未提供”。\n\n"
+        "你可以直接发一段“建档信息”，也可以逐次发送报告原文；我会区分报告原文、用户转述和 AI 整理，不会把推断写成医学事实。"
     )
 
 
@@ -341,6 +343,24 @@ def build_collect_profile_action(request: HostMessageRequest, fallback_reply_tex
         "target_conversation_id": request.conversation_id,
         "fallback_reply_text": fallback_reply_text,
         "reason": "Pregnancy profile is not ready; collect baseline pregnancy profile and latest report data before regular answers.",
+    }
+
+
+def build_install_onboarding_action(
+    data_root: str | Path,
+    channel: str,
+    conversation_id: str,
+) -> dict:
+    """Build the message a host may proactively send immediately after installation."""
+    initialize_data_dir(data_root)
+    reply_text = build_onboarding_reply(check_profile_readiness(data_root))
+    return {
+        "type": "collect_profile",
+        "send_reply": True,
+        "target_channel": channel,
+        "target_conversation_id": conversation_id,
+        "reply_text": reply_text,
+        "reason": "New installation requires a truthful local pregnancy baseline before regular answers.",
     }
 
 

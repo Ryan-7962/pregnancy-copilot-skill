@@ -27,6 +27,7 @@ def test_process_channel_message_accepts_agent_default_like_payload(tmp_path):
 
 
 def test_process_channel_message_returns_unhandled_for_general_chat(tmp_path):
+    make_profile_ready(tmp_path)
     result = run_channel_message(
         tmp_path,
         {

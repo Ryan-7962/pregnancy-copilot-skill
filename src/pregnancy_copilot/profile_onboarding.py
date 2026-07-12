@@ -160,8 +160,8 @@ def extract_initial_observations(text: str, measured_at: str) -> list[dict[str, 
                     "value": value,
                     "unit": unit,
                     "measured_at": measured_at,
-                    "status": "normal",
-                    "interpretation": "建档信息摘录，待用户按报告原文复核。",
+                    "status": "unknown",
+                    "interpretation": "建档信息数值摘录；未自动判断正常或异常，待按报告/医生原结论确认。",
                 }
             )
     placenta = match_first(text, [r"胎盘\s*([^，,；;\n]+)"])
@@ -173,8 +173,8 @@ def extract_initial_observations(text: str, measured_at: str) -> list[dict[str, 
                 "display_name": "胎盘位置",
                 "value": placenta.strip(),
                 "measured_at": measured_at,
-                "status": "normal",
-                "interpretation": "建档信息摘录，待用户按报告原文复核。",
+                "status": "unknown",
+                "interpretation": "建档信息原文摘录；未自动判断正常或异常，待按报告/医生原结论确认。",
             }
         )
     return observations
@@ -189,7 +189,7 @@ def extract_report_observations(text: str) -> list[dict[str, Any]]:
     measured_at = normalize_date(measured_at) if measured_at else "unknown"
     observations = extract_initial_observations(normalized, measured_at=measured_at or "unknown")
     for observation in observations:
-        observation["interpretation"] = "产检报告消息摘录，待用户按报告原文复核。"
+        observation["interpretation"] = "产检报告消息数值摘录；未自动判断正常或异常，待按报告/医生原结论确认。"
     return observations
 
 

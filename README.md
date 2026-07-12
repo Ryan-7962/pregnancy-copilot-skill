@@ -1,6 +1,6 @@
 # Pregnancy Copilot Skill
 
-> Version: v0.1.8 handoff package  
+> Version: v0.2.0
 > Date: 2026-06-10  
 > Status: Pre-release Agent Skill, ready for external tester review after owner approval
 
@@ -41,9 +41,9 @@ Pregnancy Copilot Skill 就是基于这些真实使用习惯和痛点整理出�
 
 Pregnancy Copilot Skill 想解决的是这个长期问题：让 AI 不再失忆、不再混淆旧报告和新报告，并把每一次有价值的孕期对话沉淀成可迁移、可复盘、可继续使用的本地档案。
 
-## v0.1.8 目前能做什么
+## v0.2.0 目前能做什么
 
-v0.1.8 是可测试的 Agent Skill 骨架，不是完整消费级 App。当前已经实现并有测试覆盖的能力包括：
+v0.2.0 是可测试的 Agent Skill 骨架，不是完整消费级 App。当前已经实现并有测试覆盖的能力包括：
 
 - 初始化本地 `pregnancy-data/` 目录和 `profile.yaml`。
 - 首次建档门禁：缺少关键孕期信息时，先要求补充基础档案/最近报告。
@@ -139,7 +139,11 @@ Feishu/Lark CLI is the most tested channel adapter in v0.1.8, but it is not the 
 7. **Artifacts matter**  
    AI 不只是回答问题，还要把孕期数据变成家庭回忆作品。
 
-## v0.1.8 默认部署
+## v0.2.0 默认部署
+
+首次安装后，宿主 Agent 应主动发起孕期建档；如果宿主不支持主动消息，用户的第一条消息会触发同一建档流程。建档会询问当前孕周或 LMP/预产期、身体与既往背景、用药和过敏、医生医嘱、当前关注项，以及已有产检报告。用户可以一次发完，也可以分多轮补充；没有的数据明确保留为未知，所有医学数值、单位、日期和医生结论应以原始报告为准。
+
+`pregnancy-data/` 中的结构化档案和长期记忆由用户本地持有，Skill 不会自行上传或分享。需要注意：用户选择的飞书、微信等聊天通道以及 Hermes/OpenClaw 背后的模型服务仍可能处理消息内容，其隐私边界由相应平台、部署方式和模型配置决定。
 
 - 推荐路径：Hermes/OpenClaw 主 Agent 调用 Host Agent Runtime，并把孕妇常用聊天窗口或机器人作为入口
 - 当前测试拓扑：宿主 Agent 的默认聊天通道先视作孕妇自己的对话入口；飞书、微信等只是可替换网关
@@ -280,7 +284,7 @@ PYTHONPATH=src .venv/bin/python scripts/run_feishu_p2p_smoke_test.py \
 
 发布到 GitHub 前，先阅读 `docs/GITHUB_RELEASE.md`。不要从本地 handoff 目录直接发布；应先构建干净 release 目录并通过 `scripts/release_check.py`。
 公开安装指南见 `INSTALL.md`。
-v0.1.8 发布说明见 `docs/PUBLIC_RELEASE_NOTES_v0.1.8.md`。
+v0.2.0 发布说明见 `docs/PUBLIC_RELEASE_NOTES_v0.2.0.md`。历史版本说明保留在 `docs/PUBLIC_RELEASE_NOTES_v0.1.8.md`。
 记忆系统说明见 `docs/MEMORY_SYSTEM.md`。
 隐私与角色模型见 `docs/PRIVACY_AND_ROLES.md`。
 当前完成度与缺口见 `docs/V0_1_STATUS_AND_GAPS.md`。

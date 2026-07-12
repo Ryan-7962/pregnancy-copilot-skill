@@ -12,3 +12,6 @@ def test_run_install_check_initializes_memory_and_generates_outputs(tmp_path):
     assert result["emotional_pattern"].endswith("memory/emotional_pattern.md")
     assert result["daily_log"].endswith("daily_logs/2026-05-05.md")
     assert result["risk_level"] == "green"
+    assert result["onboarding_action"]["type"] == "collect_profile"
+    assert result["onboarding_action"]["send_reply"] is True
+    assert "我还不了解你的具体孕期情况" in result["onboarding_action"]["reply_text"]

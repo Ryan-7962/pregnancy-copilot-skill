@@ -6,6 +6,7 @@ from pathlib import Path
 
 from pregnancy_copilot.adapters.feishu_mock import MockFeishuAdapter
 from pregnancy_copilot.event_processor import process_feishu_event
+from pregnancy_copilot.host_runtime import build_install_onboarding_action
 from pregnancy_copilot.storage import PregnancyDataStore
 try:
     from scripts.init_data_dir import initialize_data_dir
@@ -39,6 +40,11 @@ def run_install_check(data_root: str | Path) -> dict:
     medical_timeline = root / "memory" / "medical_timeline.md"
     emotional_pattern = root / "memory" / "emotional_pattern.md"
     daily_log = root / "daily_logs" / f"{date}.md"
+    onboarding_action = build_install_onboarding_action(
+        data_root=root,
+        channel="agent_default",
+        conversation_id="pregnancy-window",
+    )
     return {
         "ok": all(path.exists() for path in [raw_message, events, current_context, medical_timeline, emotional_pattern, daily_log])
         and bool(adapter.sent_replies),
@@ -50,6 +56,7 @@ def run_install_check(data_root: str | Path) -> dict:
         "emotional_pattern": emotional_pattern.as_posix(),
         "daily_log": daily_log.as_posix(),
         "reply": adapter.sent_replies[-1][1] if adapter.sent_replies else "",
+        "onboarding_action": onboarding_action,
     }
 
 

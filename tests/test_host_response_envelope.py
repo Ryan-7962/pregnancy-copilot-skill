@@ -5,6 +5,7 @@ from tests.helpers import make_profile_ready
 
 
 def test_host_action_tells_host_to_continue_normal_chat_for_unhandled_message(tmp_path):
+    make_profile_ready(tmp_path)
     result = run_host_message(
         data_root=tmp_path,
         text="推荐一首歌",

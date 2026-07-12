@@ -20,6 +20,7 @@ def run_host_runtime_acceptance(
     data_root = Path(data_root)
     general_only_root = data_root.parent / f"{data_root.name}-general-only"
 
+    make_profile_ready(data_root)
     general = process_host_message(
         HostMessageRequest(
             text="推荐一首歌",
@@ -43,7 +44,6 @@ def run_host_runtime_acceptance(
         data_root=general_only_root,
     )
 
-    make_profile_ready(data_root)
     symptom = process_host_message(
         HostMessageRequest(
             text="今天肚子有点紧，休息后好了，没有流血也没有流水",
@@ -113,10 +113,14 @@ def run_host_runtime_acceptance(
         "general_chat_host_action_pass_through": general.host_action.get("type") == "pass_through"
         and general.host_action.get("send_reply") is False
         and general.host_action.get("use_context_package") is False,
-        "general_chat_writes_no_memory": general_only.handled is False
+        "fresh_profile_triggers_onboarding": general_only.handled is True
+        and general_only.intent == "profile_onboarding"
+        and general_only.host_action.get("type") == "collect_profile"
+        and "只保存在你指定的本地 pregnancy-data 目录" in general_only.reply_text
+        and "请按产检报告原文录入" in general_only.reply_text
         and not (general_only_root / "events" / "events.jsonl").exists()
-        and not (general_only_root / "memory").exists()
-        and not (general_only_root / "inbox").exists(),
+        and (general_only_root / "memory" / "profile.yaml").exists()
+        and (general_only_root / "inbox" / f"raw_{channel}_messages" / "2026-05-16.md").exists(),
         "symptom_handled_with_context_package": symptom.handled is True and symptom.context_package is not None,
         "daily_log_without_visible_triage": daily_log.handled is True
         and daily_log.triage_required is False

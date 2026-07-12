@@ -1,4 +1,4 @@
-# Pregnancy Copilot Skill v0.1.8 Install Guide
+# Pregnancy Copilot Skill v0.2.0 Install Guide
 
 This guide is for public testers who receive the zip package or clone the GitHub repository.
 
@@ -47,9 +47,9 @@ PYTHONPATH=src .venv/bin/python scripts/run_single_user_acceptance.py \
 
 Expected: output contains `"ok": true`.
 
-This check proves the default v0.1 path:
+This check proves the default v0.1 path after profile onboarding:
 
-- normal chat returns `handled=false`;
+- normal chat returns `handled=false` after the profile is ready;
 - pregnancy symptom messages return a host `context_package`;
 - newer medical observations supersede older values in current state;
 - partner sharing is disabled by default;
@@ -66,7 +66,8 @@ Expected: output contains `"ok": true`.
 
 This check proves the Hermes/OpenClaw-style host contract:
 
-- non-pregnancy chat returns `handled=false`;
+- a fresh profile triggers onboarding on the first incoming message;
+- non-pregnancy chat returns `handled=false` after onboarding;
 - pregnancy symptom messages return `context_package`;
 - daily logs are stored without visible red/yellow/green triage;
 - later medical observations become current;
@@ -98,6 +99,25 @@ PYTHONPATH=src .venv/bin/python scripts/check_profile_readiness.py \
 ```
 
 If it returns `status=needs_review`, edit `pregnancy-data/memory/profile.yaml` before real use. This prevents the host model from treating example hospital, example gestational age, or template identity fields as facts.
+
+### Required first-run message
+
+After installation, the host Agent should proactively send the user the result of:
+
+```python
+from pregnancy_copilot.host_runtime import build_install_onboarding_action
+
+action = build_install_onboarding_action(
+    data_root="./pregnancy-data",
+    channel="agent_default",
+    conversation_id="pregnancy-window",
+)
+# Send action["reply_text"] through the host Agent's configured channel.
+```
+
+If the host does not support proactive messages, no extra integration is required: before the profile is ready, `process_host_message(...)` converts the first incoming message into `host_action.type=collect_profile`, including ordinary chat.
+
+The message explains the actual privacy boundary: structured memory remains under the local `pregnancy-data/` directory and the Skill does not independently upload it, while the selected chat platform and host model may still process the messages. Users should copy medical values, units, dates, and doctor conclusions from original reports; unknown information stays unknown.
 
 Alternatively, let the user send a clear first message starting with something like `建档信息：...`. The Host Runtime can fill the core profile fields from structured text and append initial report observations such as NT, CRL, fetal heart rate, and placenta position. Extracted report values are marked as onboarding excerpts and should still be checked against the original report when available.
 
@@ -134,6 +154,7 @@ Recommended host behavior:
 - If `host_action.type=answer_with_context_package`, use `context_package` as the LLM context and send the final answer back to `host_action.target_conversation_id`.
 - Prefer `current_medical_state.metrics.*.current` over older event history.
 - Write new report/lab values through `scripts/record_medical_observation.py`.
+- On a fresh profile, do not bypass `collect_profile` with the host Agent's general answer path.
 
 See `docs/HOST_AGENT_RUNTIME.md`.
 

@@ -1,6 +1,6 @@
 [project]
 name = "pregnancy-copilot-skill"
-version = "0.1.8"
+version = "0.2.0"
 description = "Message-first, memory-first pregnancy Q&A and family memory agent skill."
 requires-python = ">=3.10"
 dependencies = ["pyyaml>=6.0"]

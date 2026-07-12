@@ -30,6 +30,20 @@ Local `pregnancy-data/` is the source of truth. Message platforms such as Feishu
 
 Do not store real pregnancy data in the code repository. Preserve raw messages in `inbox/`, append structured records to `events/*.jsonl`, and regenerate summaries from events when needed.
 
+## Mandatory First-Run Onboarding
+
+Before regular conversation, establish a truthful local pregnancy baseline.
+
+1. Immediately after installation, initialize `pregnancy-data/` and proactively send the onboarding message returned by `build_install_onboarding_action(...)` through the host Agent's configured default channel.
+2. If the host cannot send an installation message, the Host Runtime must use the user's first incoming message to request onboarding, even when that message is not pregnancy-related.
+3. Explain that the Skill stores its profile and memory under the user-selected local `pregnancy-data/` directory and does not independently upload or share them. Also state that the chosen chat platform and host model may process message content under their own privacy policies.
+4. Ask for the pregnant user's available baseline: pregnancy anchor, body/background information, medical and pregnancy history, medications/allergies/doctor orders, current symptoms or watch items, care context, and existing checkup reports.
+5. Require report values, units, dates, and doctor conclusions to be copied from the original source. Unknown or unavailable fields must stay explicitly unknown. Never fill gaps from model inference.
+6. Distinguish original report text, user recollection, and AI-organized summaries. Do not promote an inference to a medical fact.
+7. Except for immediate emergency red flags, complete onboarding before personalized pregnancy answers or risk assessment.
+
+Onboarding is progressive: the user may provide one structured profile message or add reports over several messages. Do not require information the user does not have.
+
 ## Default v0.1 Workflow
 
 1. Normalize an incoming message into `MessageEvent`.
@@ -40,7 +54,7 @@ Do not store real pregnancy data in the code repository. Preserve raw messages i
 6. Generate optional artifacts such as baby weekly diary, partner summary, or dad diary.
 7. Before upgrade or migration, create a zip backup under `pregnancy-data/backups/`.
 
-## v0.1.8 Host Agent Runtime
+## v0.2.0 Host Agent Runtime
 
 For Hermes/OpenClaw-style hosts, the host runtime is mandatory for pregnancy-related messages. The default v0.1 product shape is one pregnant-user conversation entrypoint backed by one local `pregnancy-data/`.
 
@@ -51,6 +65,8 @@ Important runtime rule:
 - If the returned `host_action.type` is `collect_profile`, send `reply_text` as-is and ask the user to build the pregnancy profile first.
 - If the returned `host_action.type` is `answer_with_context_package`, answer using `context_package`; use `reply_text` as fallback only when no host LLM answer is possible.
 - If the returned `host_action.type` is `pass_through`, answer normally outside Pregnancy Copilot.
+
+The `pass_through` path is available only after profile readiness. Before readiness, any first incoming message returns `collect_profile` as the fallback onboarding trigger.
 
 CLI entrypoint:
 
@@ -259,7 +275,7 @@ PYTHONPATH=src python scripts/run_single_user_acceptance.py \
   --data-root /tmp/pregnancy-copilot-single-user-acceptance
 ```
 
-This verifies the v0.1 default path: general chat is not handled, pregnancy symptoms return a host context package, newer medical observations supersede older values, and partner sharing is disabled by default.
+This verifies the v0.1 default path: a fresh profile triggers onboarding, general chat passes through after readiness, pregnancy symptoms return a host context package, newer medical observations supersede older values, and partner sharing is disabled by default.
 
 Run the Host Agent Runtime acceptance check:
 
@@ -268,7 +284,7 @@ PYTHONPATH=src python scripts/run_host_runtime_acceptance.py \
   --data-root /tmp/pregnancy-copilot-host-runtime-acceptance
 ```
 
-This verifies the Hermes/OpenClaw contract: ordinary chat is returned to the host, pregnancy messages get a context package, daily logs are stored without visible triage, and current medical state prefers the latest observation.
+This verifies the Hermes/OpenClaw contract: the first message triggers onboarding when needed, ordinary chat is returned to the host after readiness, pregnancy messages get a context package, daily logs are stored without visible triage, and current medical state prefers the latest observation.
 
 ## Message Commands
 

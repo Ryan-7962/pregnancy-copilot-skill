@@ -1,3 +1,4 @@
+import pregnancy_copilot.host_runtime as host_runtime
 from pregnancy_copilot.host_runtime import HostMessageRequest, process_host_message
 from pregnancy_copilot.medical_state import read_current_medical_state
 from pregnancy_copilot.storage import PregnancyDataStore
@@ -31,6 +32,23 @@ def test_process_host_message_initializes_data_root_and_returns_reply(tmp_path):
     assert (tmp_path / "inbox" / "raw_hermes_messages" / "2026-05-07.md").exists()
     assert result.event is None
     assert result.host_action["type"] == "collect_profile"
+
+
+def test_install_onboarding_action_can_be_sent_proactively(tmp_path):
+    assert hasattr(host_runtime, "build_install_onboarding_action")
+    action = host_runtime.build_install_onboarding_action(
+        data_root=tmp_path,
+        channel="agent_default",
+        conversation_id="pregnancy-window",
+    )
+
+    assert action["type"] == "collect_profile"
+    assert action["send_reply"] is True
+    assert action["target_channel"] == "agent_default"
+    assert action["target_conversation_id"] == "pregnancy-window"
+    assert "我还不了解你的具体孕期情况" in action["reply_text"]
+    assert "只保存在你指定的本地 pregnancy-data 目录" in action["reply_text"]
+    assert "请按产检报告原文录入" in action["reply_text"]
 
 
 def test_process_host_message_accepts_profile_onboarding_intake(tmp_path):
@@ -68,6 +86,8 @@ def test_process_host_message_accepts_profile_onboarding_intake(tmp_path):
     observations = (tmp_path / "events" / "medical_observations.jsonl").read_text(encoding="utf-8")
     assert '"metric_key": "nt"' in observations
     assert '"metric_key": "fetal_heart_rate"' in observations
+    assert '"status": "normal"' not in observations
+    assert observations.count('"status": "unknown"') == 4
 
 
 def test_process_host_message_refreshes_report_observations_after_profile_ready(tmp_path):
@@ -206,7 +226,7 @@ def test_run_host_message_script_returns_json_ready_result(tmp_path):
     assert "reply_text" in result
 
 
-def test_host_runtime_returns_unhandled_for_general_chat_without_writing_memory(tmp_path):
+def test_host_runtime_uses_first_general_message_to_start_profile_onboarding(tmp_path):
     result = process_host_message(
         HostMessageRequest(
             text="明天天气怎么样，推荐一首歌",
@@ -219,12 +239,16 @@ def test_host_runtime_returns_unhandled_for_general_chat_without_writing_memory(
         data_root=tmp_path,
     )
 
-    assert result.handled is False
-    assert result.intent == "general_chat"
-    assert result.reply_text == ""
+    assert result.handled is True
+    assert result.intent == "profile_onboarding"
+    assert result.mode == "onboarding"
+    assert result.host_action["type"] == "collect_profile"
+    assert "只保存在你指定的本地 pregnancy-data 目录" in result.reply_text
+    assert "请按产检报告原文录入" in result.reply_text
+    assert "不知道或没有的数据直接写“未知/未检查/暂未提供”" in result.reply_text
     assert result.event is None
     assert not (tmp_path / "events" / "events.jsonl").exists()
-    assert not (tmp_path / "inbox" / "raw_hermes_messages").exists()
+    assert (tmp_path / "inbox" / "raw_hermes_messages" / "2026-05-07.md").exists()
 
 
 def test_host_runtime_records_pregnancy_log_without_triage_reply(tmp_path):
