@@ -1,8 +1,8 @@
 # Pregnancy Copilot Skill
 
 > Version: v0.2.0
-> Date: 2026-06-10  
-> Status: Pre-release Agent Skill, ready for external tester review after owner approval
+> Date: 2026-07-12
+> Status: Public preview, available for external testing and community feedback
 
 ![Pregnancy Copilot Skill infographic](assets/pregnancy-copilot-infographic.png)
 
