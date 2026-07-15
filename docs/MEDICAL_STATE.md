@@ -90,14 +90,16 @@ Required fields:
 - `display_name`: user-facing Chinese label.
 - `value`: exact extracted value, without optimistic rewriting.
 - `measured_at`: report date or observation date.
-- `status`: one of `normal`, `watch`, `resolved`, `active`, `unknown`.
+- `status`: one of `normal`, `watch`, `resolved`, `active`, `unknown`, `confirmed`, `corrected`, `superseded`.
+- `source_confidence`: `report_verified`, `clinician_reported`, `user_reported`, `ai_extracted`, `gemini_inferred`, or `unknown`.
 
 Guidelines:
 
-- Use the newest report date as `measured_at`.
-- If two observations use the same `measured_at`, the later `recorded_at` wins for `current`.
+- Only valid dated observations with at least `user_reported` source confidence may compete for `current`.
+- The newest eligible report date wins; source confidence and `recorded_at` break ties.
 - Do not infer missing values.
-- Do not infer missing report dates. If `measured_at` is unknown, ask the user for the report date or original report.
+- Do not infer missing report dates. An unknown date remains under `candidates` and can never replace a dated current value.
+- `ai_extracted`, `gemini_inferred`, and `unknown` confidence remain candidates until reviewed.
 - Do not mark an item `resolved` unless the new observation directly refreshes the old concern.
 - Keep report text in `raw_source_path`; do not paste private report content into public docs.
 
@@ -107,6 +109,7 @@ Guidelines:
 - `memory/current_medical_state.yaml` is regenerated.
 - Host LLMs should use `current` first.
 - `previous_values` are historical and superseded unless a newer observation reactivates the issue.
+- `candidates` preserve undated, low-confidence, or explicitly superseded records with a machine-readable reason.
 - If no reliable current fact exists, answer "unknown / needs more information" instead of filling gaps from older chat memory.
 
 ## Example
@@ -136,9 +139,12 @@ The model may mention the history when useful, but current medical reasoning mus
 - `resolved`: a previous risk or concern has been refreshed or cleared by a newer report.
 - `active`: still-active doctor order, medication, or restriction.
 - `unknown`: captured but not yet interpreted.
+- `confirmed`: value explicitly confirmed, without claiming a clinical normal/abnormal interpretation.
+- `corrected`: a later record corrects an earlier value and may become current when dated and sufficiently sourced.
+- `superseded`: explicitly historical and ineligible for current.
 
 ## Product Role
 
 This is the memory layer that ordinary Gemini/ChatGPT conversations do not reliably provide. The host model still performs medical reasoning; the skill keeps the medical data fresh, traceable, and portable across models.
 
-Daily weight, mood, diet, activity, and sleep are indexed separately in `memory/daily_metrics.yaml`. Do not force every daily record into `medical_observations.jsonl`; reserve medical observations for report values, labs, doctor conclusions, medication restrictions, and other clinically meaningful facts.
+Daily weight, blood pressure, mood, diet, activity, and sleep are indexed separately in `memory/daily_metrics.yaml`. Weight and blood pressure retain dated points and recent trends. Do not force every daily record into `medical_observations.jsonl`; reserve medical observations for report values, labs, doctor conclusions, medication restrictions, and other clinically meaningful facts.

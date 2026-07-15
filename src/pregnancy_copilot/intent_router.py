@@ -88,7 +88,13 @@ def classify_intent(text: str) -> IntentClassification:
         return IntentClassification("mood_support", True, False, True, "包含情绪或陪伴相关内容。")
     if contains_any(normalized, DIARY_KEYWORDS):
         return IntentClassification("diary", True, False, True, "包含日记或回忆记录。")
-    return general_chat("未识别为孕期记录、症状、报告、用药、情绪或日记。")
+    return IntentClassification(
+        "pregnancy_context",
+        True,
+        False,
+        False,
+        "孕妇专属入口默认由宿主 LLM 结合孕期上下文进行语义判断。",
+    )
 
 
 def contains_any(text: str, keywords: list[str]) -> bool:

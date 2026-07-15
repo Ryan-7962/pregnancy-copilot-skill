@@ -8,11 +8,12 @@ from typing import Any
 
 from .doctor_questions import read_doctor_questions
 from .medical_state import format_current_metric_line, read_current_medical_state
-from .storage import PregnancyDataStore
+from .pregnancy_time import calculate_gestational_age
+from .storage import PregnancyDataStore, atomic_write_text
 
 
 MEDICAL_EVENT_TYPES = {"prenatal_report", "report_question", "medication_question"}
-EMOTION_KEYWORDS = ["焦虑", "担心", "害怕", "紧张", "崩溃", "难过", "压力", "安心", "情绪"]
+EMOTION_KEYWORDS = ["焦虑", "担心", "害怕", "紧张", "崩溃", "难过", "压力", "安心", "情绪", "心情"]
 
 
 def format_gestational_age(value: Any) -> str:
@@ -37,7 +38,7 @@ def read_events(store: PregnancyDataStore, filename: str = "events.jsonl") -> li
     return events
 
 
-def build_current_context(store: PregnancyDataStore, recent_limit: int = 20) -> Path:
+def build_current_context(store: PregnancyDataStore, recent_limit: int = 20, as_of: str | None = None) -> Path:
     store.ensure_dirs()
     profile = store.load_profile()
     events = read_events(store)
@@ -50,7 +51,7 @@ def build_current_context(store: PregnancyDataStore, recent_limit: int = 20) -> 
     ]
     recent_events = (live_events or official_events[-recent_limit:])
 
-    gestational_age = format_gestational_age(profile.get("current_gestational_age"))
+    gestational_age = format_gestational_age(calculate_gestational_age(profile, as_of=as_of))
     focus_items = profile.get("current_focus") or []
     if not focus_items:
         focus_items = ["暂无重点事项，请从后续事件中更新。"]
@@ -133,7 +134,7 @@ def build_current_context(store: PregnancyDataStore, recent_limit: int = 20) -> 
     )
 
     path = store.root / "memory" / "current_context.md"
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_write_text(path, "\n".join(lines) + "\n")
     return path
 
 
@@ -146,6 +147,11 @@ def append_current_medical_state_lines(lines: list[str], medical_state: dict[str
         current = metric.get("current") or {}
         if current:
             lines.append(f"- {format_current_metric_line(current)}")
+            lines.append(
+                f"  - 当前值时间：{current.get('measured_at', 'unknown')}；"
+                f"来源：{current.get('raw_source_path') or current.get('source_event_id') or 'unknown'}；"
+                f"来源置信：{current.get('source_confidence', 'unknown')}"
+            )
             if current.get("status") == "resolved":
                 lines.append("  - 旧值已被更新，不应作为当前判断依据。")
         previous_values = metric.get("previous_values") or []
@@ -155,12 +161,20 @@ def append_current_medical_state_lines(lines: list[str], medical_state: dict[str
                 for item in previous_values[-3:]
             )
             lines.append(f"  - 历史值：{previous_text}")
+        candidates = metric.get("candidates") or []
+        if candidates:
+            candidate_text = "；".join(
+                f"{item.get('measured_at', 'unknown')} {item.get('value')}{item.get('unit', '')}"
+                f" ({item.get('candidate_reason', 'needs_review')})"
+                for item in candidates[-3:]
+            )
+            lines.append(f"  - 待确认候选：{candidate_text}")
 
 
 def append_daily_metrics_lines(lines: list[str], store: PregnancyDataStore) -> None:
     path = store.root / "memory" / "daily_metrics.yaml"
     if not path.exists():
-        lines.append("- 暂无体重、心情、饮食、运动或睡眠摘要索引。")
+        lines.append("- 暂无体重、血压、心情、饮食、运动或睡眠摘要索引。")
         return
     import yaml
 
@@ -171,6 +185,14 @@ def append_daily_metrics_lines(lines: list[str], store: PregnancyDataStore) -> N
         lines.append(f"- 最新体重：{latest.get('value')}{latest.get('unit', 'kg')}（{latest.get('date')}）")
         if trend.get("delta_kg") is not None:
             lines.append(f"  - 较上次变化：{trend.get('delta_kg')}kg")
+    blood_pressure_trend = payload.get("blood_pressure_trend") or {}
+    latest_blood_pressure = blood_pressure_trend.get("latest")
+    if latest_blood_pressure:
+        lines.append(
+            f"- 最新血压：{latest_blood_pressure.get('systolic')}/"
+            f"{latest_blood_pressure.get('diastolic')}{latest_blood_pressure.get('unit', 'mmHg')}"
+            f"（{latest_blood_pressure.get('date')}）"
+        )
     days = payload.get("days") or {}
     recent_moods = []
     for date, day in list(days.items())[-7:]:
@@ -179,8 +201,8 @@ def append_daily_metrics_lines(lines: list[str], store: PregnancyDataStore) -> N
     if recent_moods:
         lines.append("- 最近心情：")
         lines.extend(f"  - {item}" for item in recent_moods[-3:])
-    if not latest and not recent_moods:
-        lines.append("- 暂无体重或心情摘要。")
+    if not latest and not latest_blood_pressure and not recent_moods:
+        lines.append("- 暂无体重、血压或心情摘要。")
 
 
 def append_source_confidence_lines(lines: list[str], store: PregnancyDataStore) -> None:
@@ -255,7 +277,7 @@ def build_medical_timeline(store: PregnancyDataStore) -> Path:
     else:
         lines.append("| TBD | TBD | TBD | 暂无已确认医学事件 | reports/ |")
     path = store.root / "memory" / "medical_timeline.md"
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_write_text(path, "\n".join(lines) + "\n")
     return path
 
 
@@ -293,7 +315,7 @@ def build_emotional_pattern(store: PregnancyDataStore, recent_limit: int = 20) -
                 seen.add(response)
                 lines.append(f"- {response}")
     path = store.root / "memory" / "emotional_pattern.md"
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_write_text(path, "\n".join(lines) + "\n")
     return path
 
 

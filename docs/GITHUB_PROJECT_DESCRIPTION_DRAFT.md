@@ -72,7 +72,7 @@ Pregnancy Copilot Skill 想解决的是这个长期问题。
 
 它不是医生，也不是医疗器械。它的目标是帮助孕妇和家庭更理性、更结构化地面对孕期焦虑：该记录的记录，该复查的复查，该问医生的问医生，普通焦虑则用更完整的上下文来解释。
 
-## 当前 v0.1.8 可以公开承诺的能力
+## 当前 v0.2.1 可以公开承诺的能力
 
 - 初始化本地 `pregnancy-data/` 目录和基础档案模板。
 - 保存原始聊天输入和结构化孕期事件。
@@ -80,7 +80,7 @@ Pregnancy Copilot Skill 想解决的是这个长期问题。
 - 维护最新医学指标，同时保留旧值作为历史。
 - 记录体重、睡眠、心情、饮食、运动等日常数据。
 - 对症状和异常报告做条件式红 / 黄 / 绿安全提示。
-- 普通闲聊不进入孕期记忆，不强行医疗化。
+- 普通闲聊可读取最小孕期上下文，但不强行显示风险分级或写入医疗状态。
 - 生成产检问题清单、日常日志、宝宝周记素材和可选伴侣 summary。
 - 支持 Host Runtime 给 Hermes/OpenClaw/Codex/Claude Code 等宿主 Agent 调用。
 - 提供飞书/Lark CLI 测试通道和 runtime worker。
@@ -97,7 +97,7 @@ Pregnancy Copilot Skill 想解决的是这个长期问题。
 
 ## 通道表达建议
 
-飞书/Lark CLI 是当前 v0.1.8 测试最完整的通道适配器，但不是产品边界。
+飞书/Lark CLI 是已有测试适配器之一，但不是默认通道或产品边界。
 
 更准确的表达是：
 
@@ -118,9 +118,9 @@ It is not a standalone app, a medical device, or a replacement for obstetric car
 
 The core problem is not one-off pregnancy Q&A. The harder problem is long-running pregnancy context: medical values change, old report findings may be resolved, symptoms and daily notes are scattered, and switching models or chat channels can break continuity.
 
-v0.1.8 can initialize a local `pregnancy-data/` folder, store raw messages and structured events, maintain current-vs-historical medical observations, build a context package for the host Agent, track daily metrics, apply conditional red/yellow/green safety prompts for symptom or abnormal-report messages, and generate basic family artifacts such as daily logs, doctor questions, visit SOPs, and baby weekly diary material.
+v0.2.1 can initialize a local `pregnancy-data/` folder, guide truthful first-run onboarding, store raw messages and structured events, maintain current-versus-historical medical observations with provenance, build a context package for the host Agent, track daily metrics, apply conditional safety prompts only for medically relevant messages, and generate optional family-memory artifacts.
 
-Feishu/Lark CLI is the most tested channel adapter in v0.1.8, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
+Feishu/Lark CLI is an available tested adapter, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
 
 ## Suggested GitHub Topics
 

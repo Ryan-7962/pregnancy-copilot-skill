@@ -83,7 +83,7 @@ def test_host_runtime_returns_context_package_for_handled_pregnancy_message(tmp_
     assert result.context_package["memory_write_policy"]["append_structured_event"] is True
 
 
-def test_host_runtime_omits_context_package_for_general_chat(tmp_path):
+def test_host_runtime_keeps_minimal_context_for_general_chat_without_triage(tmp_path):
     make_profile_ready(tmp_path)
     result = process_host_message(
         HostMessageRequest(
@@ -96,8 +96,11 @@ def test_host_runtime_omits_context_package_for_general_chat(tmp_path):
         data_root=tmp_path,
     )
 
-    assert result.handled is False
-    assert result.context_package is None
+    assert result.handled is True
+    assert result.intent == "pregnancy_context"
+    assert result.context_package is not None
+    assert result.triage_required is False
+    assert result.risk_level == "not_applicable"
 
 
 def test_process_host_message_script_includes_context_package(tmp_path):

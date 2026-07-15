@@ -6,6 +6,7 @@ def test_build_release_package_excludes_private_and_generated_files(tmp_path):
     source = tmp_path / "source"
     source.mkdir()
     (source / "README.md").write_text("# Demo", encoding="utf-8")
+    (source / "._README.md").write_text("appledouble", encoding="utf-8")
     (source / "SKILL.md").write_text("---\nname: demo\n---\n", encoding="utf-8")
     (source / "src" / "pkg").mkdir(parents=True)
     (source / "src" / "pkg" / "__init__.py").write_text("", encoding="utf-8")
@@ -33,6 +34,7 @@ def test_build_release_package_excludes_private_and_generated_files(tmp_path):
 
     assert "README.md" in copied
     assert (target / "README.md").exists()
+    assert not (target / "._README.md").exists()
     assert (target / "src" / "pkg" / "__init__.py").exists()
     assert not (target / "src" / "pkg" / "__pycache__").exists()
     assert not (target / "docs" / "private").exists()

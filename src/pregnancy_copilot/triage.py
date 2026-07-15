@@ -12,7 +12,7 @@ RISK_ORDER = {"green": 0, "yellow": 1, "red": 2}
 RED_FLAG_KEYWORDS = {
     "阴道流血": ["流血", "出血", "见红"],
     "疑似破水": ["流水", "破水", "水一样"],
-    "胎动异常": ["胎动明显减少", "胎动明显少", "动得明显少", "胎动少了很多", "胎动停止", "不动了"],
+    "胎动异常": ["胎动明显减少", "胎动明显少", "动得明显少", "胎动少了很多", "胎动比平时少", "胎动停止", "不动了"],
     "严重腹痛": ["剧烈腹痛", "持续腹痛", "痛得受不了"],
     "严重头痛或视力变化": ["严重头痛", "头痛很厉害", "眼花", "视力模糊"],
     "胸痛或呼吸困难": ["胸痛", "喘不上气", "呼吸困难"],
@@ -41,16 +41,16 @@ MEDICAL_TOPIC_KEYWORDS = [
 ]
 
 
-def _is_negated(text: str, keyword: str) -> bool:
-    index = text.find(keyword)
-    if index == -1:
+def _is_negated_at(text: str, index: int) -> bool:
+    prefix = text[:index]
+    clause_prefix = re.split(r"[，,。；;!！?？\n]|但是|但|现在|后来|刚才|又", prefix)[-1]
+    if any(marker in clause_prefix for marker in ["不是没有", "并非没有", "不能说没有"]):
         return False
-    prefix = text[max(0, index - 4):index]
-    return any(marker in prefix for marker in ["没有", "没", "无", "未"])
+    return bool(re.search(r"(?:没有|不曾|并无|没|无|未)[^，,。；;!！?？\n]{0,6}$", clause_prefix))
 
 
 def _contains_keyword(text: str, keyword: str) -> bool:
-    return keyword in text and not _is_negated(text, keyword)
+    return any(not _is_negated_at(text, match.start()) for match in re.finditer(re.escape(keyword), text))
 
 
 class TriageAdvisor(Protocol):
@@ -64,7 +64,10 @@ class LLMTriageAdvisor:
 
     def assess(self, text: str, rule_result: TriageResult) -> TriageResult | None:
         prompt = build_llm_triage_prompt(text, rule_result)
-        raw = self.provider.generate(prompt)
+        try:
+            raw = self.provider.generate(prompt)
+        except Exception:
+            return None
         payload = parse_json_object(raw)
         if not payload:
             return None

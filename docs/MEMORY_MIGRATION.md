@@ -58,6 +58,38 @@ pregnancy-data/backups/2026-05-05-before-v0.2.zip
 - doctor_questions
 - feishu_docs
 
+备份 ZIP 默认未加密。“保存在本地”不等于“只有孕妇可读”；请使用系统磁盘加密、文件权限和独立备份位置。同一天重复备份会生成新文件，不覆盖旧快照。
+
+恢复验证：
+
+```python
+from pregnancy_copilot.backup import restore_upgrade_backup, verify_upgrade_backup
+
+verify_upgrade_backup("pregnancy-data/backups/2026-07-15-before-v0.2.1.zip")
+restore_upgrade_backup(
+    "pregnancy-data/backups/2026-07-15-before-v0.2.1.zip",
+    "/tmp/pregnancy-data-restored",
+)
+```
+
+恢复目标必须为空目录，ZIP 内路径会先进行穿越校验。
+
+## 5.1 v0.2.0 -> v0.2.1
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/upgrade_to_v021.py \
+  --data-root ./pregnancy-data
+```
+
+该命令按以下顺序执行：
+
+1. 创建升级前 ZIP。
+2. 校验 ZIP 完整性与成员路径。
+3. 仅当 profile 完整匹配未编辑的 v0.2.0 演示模板时，清空仿真孕周/医院/关注项。
+4. 部分编辑的档案不自动删值，只列出待人工复核字段。
+5. 从 append-only 观测重建 current medical state 和 current context。
+6. 写入本地迁移报告。
+
 ## 6. 迁移脚本
 
 建议目录：

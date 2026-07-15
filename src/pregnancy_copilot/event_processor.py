@@ -14,6 +14,7 @@ from .intent_router import IntentClassification, classify_intent
 from .llm import LLMProvider
 from .models import MessageEvent, TriageResult
 from .prompts import PromptBuilder, ResponseWriter
+from .pregnancy_time import calculate_gestational_age
 from .router import MessageRoute, route_message
 from .storage import PregnancyDataStore, SCHEMA_VERSION
 from .triage import TriageAdvisor, triage_message
@@ -133,7 +134,7 @@ def build_event_record(
         "mode": route.mode,
         "command": route.command,
         "timestamp": timestamp,
-        "gestational_age": profile.get("current_gestational_age"),
+        "gestational_age": calculate_gestational_age(profile, as_of=timestamp[:10]) or "unknown",
         "source": message.source,
         "sender_role": message.sender_role,
         "sender_id": message.sender_id,
@@ -192,7 +193,10 @@ def generate_response_reply(
         user_message=user_message,
         risk_level=triage.risk_level,
     )
-    response = response_provider.generate(prompt).strip()
+    try:
+        response = response_provider.generate(prompt).strip()
+    except Exception:
+        return fallback
     if not response:
         return fallback
     if triage.risk_level == "red" and "尽快联系产科医生" not in response:

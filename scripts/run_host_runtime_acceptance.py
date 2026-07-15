@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+import yaml
 
 from pregnancy_copilot.data_init import initialize_data_dir
 from pregnancy_copilot.host_runtime import HostMessageRequest, process_host_message
@@ -109,10 +110,13 @@ def run_host_runtime_acceptance(
     current_metric = medical_state["metrics"]["cervical_length"]["current"]
     previous_values = medical_state["metrics"]["cervical_length"]["previous_values"]
     checks = {
-        "general_chat_not_handled": general.handled is False and general.context_package is None,
-        "general_chat_host_action_pass_through": general.host_action.get("type") == "pass_through"
-        and general.host_action.get("send_reply") is False
-        and general.host_action.get("use_context_package") is False,
+        "general_chat_uses_minimal_context": general.handled is True
+        and general.intent == "pregnancy_context"
+        and general.context_package is not None
+        and general.risk_level == "not_applicable",
+        "general_chat_host_action_uses_context": general.host_action.get("type") == "answer_with_context_package"
+        and general.host_action.get("send_reply") is True
+        and general.host_action.get("use_context_package") is True,
         "fresh_profile_triggers_onboarding": general_only.handled is True
         and general_only.intent == "profile_onboarding"
         and general_only.host_action.get("type") == "collect_profile"
@@ -181,17 +185,14 @@ def run_host_runtime_acceptance(
 def make_profile_ready(data_root: str | Path) -> None:
     root = initialize_data_dir(data_root)
     profile_path = root / "memory" / "profile.yaml"
-    profile_text = profile_path.read_text(encoding="utf-8")
-    replacements = {
-        'profile_name: "Example Pregnancy Profile"': 'profile_name: "Acceptance Pregnancy Profile"',
-        'display_name: "孕妇"': 'display_name: "验收用户"',
-        'baby_nickname: "宝宝"': 'baby_nickname: "验收宝宝"',
-        'current_gestational_age: "20w0d"': 'current_gestational_age: "23w1d"',
-        'name: "示例医院"': 'name: "验收医院"',
-    }
-    for old, new in replacements.items():
-        profile_text = profile_text.replace(old, new)
-    profile_path.write_text(profile_text, encoding="utf-8")
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile.update(
+        profile_name="Acceptance Pregnancy Profile",
+        display_name="验收用户",
+        baby_nickname="验收宝宝",
+        current_gestational_age="23w1d",
+    )
+    profile_path.write_text(yaml.safe_dump(profile, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
 def main() -> None:

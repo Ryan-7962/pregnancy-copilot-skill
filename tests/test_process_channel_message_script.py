@@ -26,7 +26,7 @@ def test_process_channel_message_accepts_agent_default_like_payload(tmp_path):
     assert (tmp_path / "inbox" / "raw_agent_default_messages" / "2026-05-16.md").exists()
 
 
-def test_process_channel_message_returns_unhandled_for_general_chat(tmp_path):
+def test_process_channel_message_returns_context_only_for_general_chat(tmp_path):
     make_profile_ready(tmp_path)
     result = run_channel_message(
         tmp_path,
@@ -38,9 +38,10 @@ def test_process_channel_message_returns_unhandled_for_general_chat(tmp_path):
         },
     )
 
-    assert result["handled"] is False
+    assert result["handled"] is True
     assert result["reply_text"] == ""
-    assert result["context_package"] is None
+    assert result["intent"] == "pregnancy_context"
+    assert result["context_package"] is not None
     assert not (tmp_path / "events" / "events.jsonl").exists()
 
 

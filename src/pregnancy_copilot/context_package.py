@@ -4,6 +4,7 @@ from typing import Any
 
 from .context_builder import build_current_context
 from .medical_state import read_current_medical_state
+from .profile_readiness import check_profile_readiness
 from .response_style import build_response_style
 from .storage import PregnancyDataStore, SCHEMA_VERSION
 
@@ -28,8 +29,10 @@ def build_host_context_package(
         "system_prompt": build_host_system_prompt(profile, response_style),
         "context_markdown": context_markdown,
         "current_medical_state": current_medical_state,
+        "profile_readiness": check_profile_readiness(store.root),
         "response_style": response_style,
         "safety_floor": build_safety_floor(),
+        "semantic_routing_contract": build_semantic_routing_contract(),
         "memory_write_policy": build_memory_write_policy(intent),
         "output_contract": build_output_contract(profile),
     }
@@ -51,6 +54,8 @@ def build_host_system_prompt(profile: dict[str, Any], response_style: dict[str, 
             "- 宿主大模型负责医学审计、语义判断、解释和最终回复。",
             "- Pregnancy Copilot Skill 负责提供长期记忆、当前有效医学状态、可追溯来源、安全兜底和产物工作流。",
             "- 不要把本 skill 当作关键词规则机器人；不要只根据单个关键词下结论。",
+            "- 先判断当前消息是否涉及孕期、医学、症状、用药、检查、饮食安全或身体变化。",
+            "- 只在医学相关时显示红黄绿风险；普通闲聊不强制分级，也不写入医疗状态。",
             "",
             "医学事实优先级：",
             "1. 优先读取 memory/current_medical_state.yaml 中 metrics.*.current。",
@@ -87,10 +92,29 @@ def build_safety_floor() -> list[str]:
     ]
 
 
+def build_semantic_routing_contract() -> dict[str, Any]:
+    return {
+        "performed_by": "host_llm",
+        "scope": [
+            "pregnancy_relevance",
+            "medical_relevance",
+            "symptom_or_body_change",
+            "report_or_medication",
+            "diet_or_activity_safety",
+        ],
+        "risk_label_policy": "medical_relevance_only",
+        "ordinary_chat_policy": "answer_normally_without_triage_or_medical_state_write",
+        "fallback_when_host_llm_unavailable": "deterministic_red_flag_floor_only; do_not_claim_semantic_assessment",
+    }
+
+
 def build_memory_write_policy(intent: str) -> dict[str, Any]:
+    context_only = intent in {"general_chat", "pregnancy_context"}
     return {
         "preserve_raw_message": True,
-        "append_structured_event": intent != "general_chat",
+        "append_structured_event": not context_only,
+        "host_may_write_after_semantic_decision": context_only,
+        "semantic_write_condition": "durable pregnancy fact, explicit memory request, or medically relevant event",
         "extract_medical_observations_when_report_or_lab_data_present": True,
         "update_current_medical_state_after_new_observations": "only_after_explicit_tool_success",
         "do_not_claim_memory_write_without_tool_success": True,

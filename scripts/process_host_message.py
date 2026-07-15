@@ -16,6 +16,9 @@ def run_host_message(
     channel: str = "host_agent",
     chat_type: str = "p2p",
     timestamp: str | None = None,
+    message_id: str | None = None,
+    event_id: str | None = None,
+    pregnancy_id: str | None = None,
 ) -> dict:
     result = process_host_message(
         HostMessageRequest(
@@ -26,6 +29,9 @@ def run_host_message(
             channel=channel,
             chat_type=chat_type,
             timestamp=timestamp,
+            message_id=message_id,
+            event_id=event_id,
+            pregnancy_id=pregnancy_id,
         ),
         data_root=data_root,
     )
@@ -56,6 +62,9 @@ def main() -> None:
     parser.add_argument("--channel", default="host_agent")
     parser.add_argument("--chat-type", default="p2p")
     parser.add_argument("--timestamp")
+    parser.add_argument("--message-id")
+    parser.add_argument("--event-id")
+    parser.add_argument("--pregnancy-id")
     args = parser.parse_args()
 
     result = run_host_message(
@@ -67,6 +76,9 @@ def main() -> None:
         channel=args.channel,
         chat_type=args.chat_type,
         timestamp=args.timestamp,
+        message_id=args.message_id,
+        event_id=args.event_id,
+        pregnancy_id=args.pregnancy_id,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

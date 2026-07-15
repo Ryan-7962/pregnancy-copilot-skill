@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from importlib.resources import files
 from pathlib import Path
 
 
@@ -22,21 +23,16 @@ DATA_DIRS = [
     "backups",
 ]
 
-TEMPLATE_ROOT = Path(__file__).resolve().parent.parent.parent / "pregnancy-data-template"
-
-
 def initialize_data_dir(target: str | Path) -> Path:
     root = Path(target)
     for directory in DATA_DIRS:
         (root / directory).mkdir(parents=True, exist_ok=True)
 
-    memory_template_root = TEMPLATE_ROOT / "memory"
-    if memory_template_root.exists():
-        for template in memory_template_root.glob("*"):
-            if template.is_file():
-                destination = root / "memory" / template.name
-                if not destination.exists():
-                    destination.write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
+    memory_template_root = files("pregnancy_copilot").joinpath("templates", "memory")
+    for template in memory_template_root.iterdir():
+        if template.is_file():
+            destination = root / "memory" / template.name
+            if not destination.exists():
+                destination.write_text(template.read_text(encoding="utf-8"), encoding="utf-8")
 
     return root
-

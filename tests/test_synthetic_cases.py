@@ -26,6 +26,6 @@ def test_synthetic_cases_cover_realistic_runtime_paths(tmp_path):
     by_id = {item["id"]: item for item in result["results"]}
     assert by_id["symptom_green_abdominal_tightness_rest_relief"]["actual"]["risk_level"] == "green"
     assert by_id["symptom_red_bleeding_with_persistent_pain"]["actual"]["risk_level"] == "red"
-    assert by_id["general_chat_pass_through"]["actual"]["host_action_type"] == "pass_through"
+    assert by_id["general_chat_with_context"]["actual"]["host_action_type"] == "answer_with_context_package"
     assert (tmp_path / "events" / "events.jsonl").exists()
     assert (tmp_path / "memory" / "current_context.md").exists()

@@ -41,7 +41,8 @@ def test_build_current_context_from_profile_and_events(tmp_path):
     content = path.read_text(encoding="utf-8")
 
     assert path == tmp_path / "memory" / "current_context.md"
-    assert "W20+0" in content
+    assert "未设置" in content
+    assert "W20+0" not in content
     assert "询问肚皮发紧是否正常" in content
     assert "yellow" in content
     assert "肚皮发紧是否需要关注宫颈长度？" in content

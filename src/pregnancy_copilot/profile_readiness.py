@@ -25,19 +25,22 @@ def check_profile_readiness(data_root: str | Path) -> dict[str, Any]:
         "preferences": check_preferences(profile),
         "privacy_defaults": check_privacy_defaults(profile),
     }
-    missing_or_template_fields = sorted(
+    all_missing_fields = sorted(
         {
             field
             for check in checks.values()
             for field in check["missing_or_template_fields"]
         }
     )
+    blocking_fields = checks["pregnancy_anchor"]["missing_or_template_fields"]
+    optional_missing_fields = sorted(set(all_missing_fields) - set(blocking_fields))
     return {
-        "ok": not missing_or_template_fields,
-        "status": "ready" if not missing_or_template_fields else "needs_review",
-        "missing_or_template_fields": missing_or_template_fields,
+        "ok": not blocking_fields,
+        "status": "ready" if not blocking_fields else "needs_review",
+        "missing_or_template_fields": blocking_fields,
+        "optional_missing_fields": optional_missing_fields,
         "checks": checks,
-        "next_steps": build_next_steps(missing_or_template_fields),
+        "next_steps": build_next_steps(blocking_fields),
     }
 
 
@@ -56,8 +59,9 @@ def check_identity(profile: dict[str, Any]) -> dict[str, Any]:
 def check_pregnancy_anchor(profile: dict[str, Any]) -> dict[str, Any]:
     gestational_age = profile.get("current_gestational_age")
     due_date = profile.get("due_date")
+    lmp = profile.get("last_menstrual_period")
     missing = []
-    if is_template_or_empty("current_gestational_age", gestational_age) and not due_date:
+    if is_template_or_empty("current_gestational_age", gestational_age) and not due_date and not lmp:
         missing.append("current_gestational_age")
     return {
         "ok": not missing,

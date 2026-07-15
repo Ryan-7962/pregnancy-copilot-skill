@@ -1,4 +1,5 @@
 import json
+from importlib.resources import files
 from pathlib import Path
 
 import pytest
@@ -36,10 +37,35 @@ def test_initialize_data_dir_creates_full_structure_and_profile(tmp_path):
     assert profile_path.exists()
     profile = PregnancyDataStore(tmp_path).load_profile()
     assert profile["schema_version"] == "0.1"
-    assert profile["baby_nickname"] == "宝宝"
+    assert profile["baby_nickname"] is None
+    assert profile["current_gestational_age"] is None
+    assert profile["hospital"]["name"] is None
     assert profile["privacy"]["default_privacy_level"] == "summary"
     assert profile["preferences"]["partner_share_default"] == "private"
     assert profile["preferences"]["husband_share_default"] == "private"
+
+
+def test_packaged_templates_exist_and_contain_no_demo_medical_facts():
+    template_root = files("pregnancy_copilot").joinpath("templates", "memory")
+    names = {item.name for item in template_root.iterdir() if item.is_file()}
+    assert names == {
+        "current_context.md",
+        "emotional_pattern.md",
+        "long_term_summary.md",
+        "medical_timeline.md",
+        "preferences.yaml",
+        "profile.yaml",
+    }
+
+    combined = "\n".join(item.read_text(encoding="utf-8") for item in template_root.iterdir() if item.is_file())
+    assert "W20+0" not in combined
+    assert "示例医院" not in combined
+    assert "20 周大排畸" not in combined
+
+    source_template_root = Path(__file__).parents[1] / "pregnancy-data-template" / "memory"
+    for item in template_root.iterdir():
+        if item.is_file():
+            assert item.read_text(encoding="utf-8") == (source_template_root / item.name).read_text(encoding="utf-8")
 
 
 def test_save_raw_message_writes_inbox_with_traceable_metadata(tmp_path):

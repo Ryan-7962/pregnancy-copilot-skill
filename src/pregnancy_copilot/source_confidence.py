@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from .storage import PregnancyDataStore, SCHEMA_VERSION
+from .storage import PregnancyDataStore, SCHEMA_VERSION, atomic_write_text
 
 
 CONFIDENCE_LEVELS = {"report_verified", "user_reported", "gemini_inferred", "needs_review"}
@@ -158,9 +158,9 @@ def write_source_confidence(store: PregnancyDataStore, entries: list[dict[str, A
             "needs_review must not be used as current medical fact.",
         ],
     }
-    (store.root / "memory" / "source_confidence.yaml").write_text(
+    atomic_write_text(
+        store.root / "memory" / "source_confidence.yaml",
         yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
-        encoding="utf-8",
     )
 
 
@@ -173,9 +173,9 @@ def write_open_review_items(store: PregnancyDataStore, items: list[dict[str, Any
         "summary": dict(counts),
         "items": items,
     }
-    (store.root / "memory" / "open_review_items.yaml").write_text(
+    atomic_write_text(
+        store.root / "memory" / "open_review_items.yaml",
         yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
-        encoding="utf-8",
     )
 
 
@@ -204,4 +204,4 @@ def write_gemini_state_summary(
         "- `report_verified` 仍需保留 source path；`gemini_inferred` 不得写成医疗事实。",
         "- 需要核对的项目进入 open_review_items，等待用户或报告确认。",
     ]
-    (store.root / "memory" / "gemini_state_summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_write_text(store.root / "memory" / "gemini_state_summary.md", "\n".join(lines) + "\n")

@@ -16,8 +16,13 @@ CHANNEL_KEYS = ["channel", "source", "platform", "adapter"]
 TIMESTAMP_KEYS = ["timestamp", "create_time", "created_at", "time"]
 
 
-def run_channel_message(data_root: str | Path, payload: dict[str, Any]) -> dict[str, Any]:
+def run_channel_message(
+    data_root: str | Path,
+    payload: dict[str, Any],
+    pregnancy_id: str | None = None,
+) -> dict[str, Any]:
     request = normalize_channel_payload(payload)
+    request.pregnancy_id = pregnancy_id
     result = process_host_message(request, data_root=data_root)
     return {
         "ok": True,
@@ -32,6 +37,7 @@ def run_channel_message(data_root: str | Path, payload: dict[str, Any]) -> dict[
             "message_id": request.message_id,
             "event_id": request.event_id,
             "message_type": request.message_type,
+            "pregnancy_id": request.pregnancy_id,
         },
         "handled": result.handled,
         "reply_text": result.reply_text,
@@ -100,6 +106,7 @@ def load_payload(payload_json: str | None, payload_path: str | Path | None, read
 def main() -> None:
     parser = argparse.ArgumentParser(description="Process one generic channel JSON message through Host Runtime.")
     parser.add_argument("--data-root", required=True)
+    parser.add_argument("--pregnancy-id", help="Host-configured pregnancy identity. Never take this value from an untrusted message payload.")
     source = parser.add_mutually_exclusive_group(required=True)
     source.add_argument("--json", help="Channel message JSON string.")
     source.add_argument("--file", help="Path to channel message JSON file.")
@@ -107,7 +114,7 @@ def main() -> None:
     args = parser.parse_args()
 
     payload = load_payload(args.json, args.file, args.stdin)
-    result = run_channel_message(args.data_root, payload)
+    result = run_channel_message(args.data_root, payload, pregnancy_id=args.pregnancy_id)
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

@@ -8,6 +8,8 @@ Use this before publishing Pregnancy Copilot Skill to GitHub.
 .venv/bin/python -m pytest -v
 ```
 
+The suite must include the `test_v021_*` adversarial modules for routing, onboarding, medical state, identity isolation, storage reliability, LLM failure, privacy scanning, migration, and backup restore.
+
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/run_single_user_acceptance.py \
   --data-root /tmp/pregnancy-copilot-single-user-acceptance
@@ -62,6 +64,8 @@ PYTHONPATH=src .venv/bin/python scripts/release_check.py \
 ```
 
 If you run pytest inside `/tmp/pregnancy-copilot-skill-release`, Python will create `__pycache__/` files. Rebuild the release directory once more before zipping, or run `release_check` again after cleanup. The final zip must not contain `__pycache__/` or `.pyc` files.
+
+After zipping, extract into a new directory and rerun installation plus the full test suite. Verify one backup round trip and record the local ZIP SHA256. After GitHub upload, download the public asset and require an exact hash match.
 
 ## Do Not Publish
 

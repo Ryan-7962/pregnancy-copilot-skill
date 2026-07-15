@@ -4,7 +4,7 @@ from scripts.process_host_message import run_host_message
 from tests.helpers import make_profile_ready
 
 
-def test_host_action_tells_host_to_continue_normal_chat_for_unhandled_message(tmp_path):
+def test_host_action_tells_host_to_answer_general_chat_with_minimal_context(tmp_path):
     make_profile_ready(tmp_path)
     result = run_host_message(
         data_root=tmp_path,
@@ -14,14 +14,16 @@ def test_host_action_tells_host_to_continue_normal_chat_for_unhandled_message(tm
         channel="hermes",
     )
 
-    assert result["handled"] is False
+    assert result["handled"] is True
     assert result["host_action"] == {
-        "type": "pass_through",
-        "send_reply": False,
-        "use_context_package": False,
+        "type": "answer_with_context_package",
+        "send_reply": True,
+        "use_context_package": True,
+        "context_package_required": True,
         "target_channel": "hermes",
         "target_conversation_id": "pregnancy-window",
-        "reason": "Message is outside Pregnancy Copilot scope; host should answer normally.",
+        "fallback_reply_text": "",
+        "reason": "Pregnancy Copilot handled the message; host should answer using context_package and may use fallback_reply_text if no host LLM is available.",
     }
 
 

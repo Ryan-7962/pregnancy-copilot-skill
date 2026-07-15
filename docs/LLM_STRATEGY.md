@@ -50,14 +50,14 @@ If it fails or returns empty output, the event loop falls back to the determinis
 
 ## Safety
 
-The local rule layer always remains available.
+The local rule layer always remains available as a limited safety fallback, not the primary medical reasoning engine.
 
 For triage:
 
-- local rules catch deterministic red/yellow/green cases
+- local rules catch a small set of explicit emergency red flags and conservative fallback cases
 - optional semantic LLM can upgrade risk
 - semantic LLM cannot downgrade a rule-based red result
-- invalid model output falls back to local rules
+- invalid, refused, empty, or failed model output falls back to local rules without claiming semantic assessment
 
 For answer generation:
 

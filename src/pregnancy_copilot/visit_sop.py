@@ -169,7 +169,7 @@ def append_medical_state(lines: list[str], medical_state: dict[str, Any]) -> Non
 
 def append_daily_metrics(lines: list[str], daily_metrics: dict[str, Any]) -> None:
     if not daily_metrics:
-        lines.append("- 暂无体重、心情、饮食、运动或睡眠索引。")
+        lines.append("- 暂无体重、血压、心情、饮食、运动或睡眠索引。")
         return
     trend = daily_metrics.get("weight_trend") or {}
     latest = trend.get("latest")

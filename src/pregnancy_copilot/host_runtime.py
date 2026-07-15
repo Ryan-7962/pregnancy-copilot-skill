@@ -10,6 +10,7 @@ from .context_package import build_host_context_package
 from .data_init import initialize_data_dir
 from .event_processor import process_feishu_event
 from .intent_router import classify_intent
+from .identity import IdentityEndpoint, IdentityRegistry, ensure_local_identity_binding
 from .llm import LLMProvider
 from .models import MessageEvent
 from .profile_readiness import check_profile_readiness
@@ -36,6 +37,7 @@ class HostMessageRequest:
     message_id: str | None = None
     event_id: str | None = None
     message_type: str = "text"
+    pregnancy_id: str | None = None
 
 
 @dataclass
@@ -88,17 +90,28 @@ def process_host_message(
     triage_advisor: TriageAdvisor | None = None,
     response_provider: LLMProvider | None = None,
 ) -> HostMessageResult:
-    initialize_data_dir(data_root)
-    store = PregnancyDataStore(data_root)
+    endpoint = IdentityEndpoint(
+        channel=request.channel,
+        conversation_id=request.conversation_id,
+        sender_id=request.sender_id,
+    )
+    effective_root = (
+        IdentityRegistry(data_root).resolve_or_create(request.pregnancy_id, endpoint)
+        if request.pregnancy_id
+        else Path(data_root)
+    )
+    initialize_data_dir(effective_root)
+    ensure_local_identity_binding(effective_root, endpoint)
+    store = PregnancyDataStore(effective_root)
     adapter = HostAgentAdapter()
     payload = build_host_payload(request)
-    readiness = check_profile_readiness(data_root)
+    readiness = check_profile_readiness(effective_root)
     intent = classify_intent(request.text)
     pre_triage = triage_message(request.text, advisor=triage_advisor) if intent.triage_required else None
     if readiness["status"] != "ready" and (not pre_triage or pre_triage.risk_level != "red"):
         message = adapter.receive_message(payload)
         raw_path = store.save_raw_message(message)
-        onboarding_update = extract_profile_onboarding_update(request.text)
+        onboarding_update = extract_profile_onboarding_update(request.text, as_of=payload["timestamp"][:10])
         if onboarding_update.is_profile_intake:
             raw_source_path = raw_path.relative_to(store.root).as_posix()
             apply_profile_onboarding_update(
@@ -117,7 +130,7 @@ def process_host_message(
                 update=onboarding_update,
             )
             store.append_event(event, dedupe_by_event_id=True)
-            updated_readiness = check_profile_readiness(data_root)
+            updated_readiness = check_profile_readiness(effective_root)
             reply_text = build_profile_onboarding_saved_reply(updated_readiness, onboarding_update)
             context_package = build_host_context_package(
                 store=store,
@@ -178,6 +191,29 @@ def process_host_message(
             context_package=context_package,
             host_action=build_collect_profile_action(request, reply_text),
         )
+    if intent.handled_by_skill and not intent.write_to_memory:
+        message = adapter.receive_message(payload)
+        raw_path = store.save_raw_message(message)
+        context_package = build_host_context_package(
+            store=store,
+            user_message=request.text,
+            intent=intent.intent,
+            channel=request.channel,
+        )
+        return HostMessageResult(
+            reply_text="",
+            event=None,
+            risk_level="not_applicable",
+            event_id=payload["event_id"],
+            mode="pregnancy_context",
+            privacy_level="summary",
+            handled=True,
+            intent=intent.intent,
+            triage_required=False,
+            artifacts={"raw_source_path": raw_path.relative_to(store.root).as_posix()},
+            context_package=context_package,
+            host_action=build_host_action(request, handled=True),
+        )
     if not intent.handled_by_skill:
         return HostMessageResult(
             reply_text="",
@@ -232,7 +268,7 @@ def process_host_message(
 def build_host_payload(request: HostMessageRequest) -> dict:
     timestamp = request.timestamp or datetime.now(timezone.utc).astimezone().isoformat()
     message_id = request.message_id or f"host-message-{stable_id_seed(request, timestamp)}"
-    event_id = request.event_id or f"host-{stable_id_seed(request, timestamp)}"
+    event_id = request.event_id or request.message_id or f"host-{stable_id_seed(request, timestamp)}"
     return {
         "event_id": event_id,
         "message_id": message_id,
@@ -254,7 +290,16 @@ def build_current_context_from_store(store: PregnancyDataStore) -> None:
 
 
 def stable_id_seed(request: HostMessageRequest, timestamp: str) -> str:
-    seed = f"{request.channel}-{request.conversation_id}-{request.sender_id}-{timestamp}"
+    seed = "|".join(
+        [
+            request.channel,
+            request.conversation_id,
+            request.sender_id,
+            timestamp,
+            request.message_type,
+            request.text,
+        ]
+    )
     return sha256(seed.encode("utf-8")).hexdigest()[:16]
 
 

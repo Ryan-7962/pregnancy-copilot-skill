@@ -41,10 +41,10 @@ def test_classify_mood_support_writes_memory_without_triage():
     assert result.write_to_memory is True
 
 
-def test_classify_general_chat_is_not_handled_by_skill():
+def test_classify_general_chat_keeps_pregnancy_context_without_memory_write():
     result = classify_intent("明天天气怎么样，顺便推荐一首歌")
 
-    assert result.intent == "general_chat"
-    assert result.handled_by_skill is False
+    assert result.intent == "pregnancy_context"
+    assert result.handled_by_skill is True
     assert result.triage_required is False
     assert result.write_to_memory is False

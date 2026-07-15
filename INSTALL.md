@@ -1,4 +1,4 @@
-# Pregnancy Copilot Skill v0.2.0 Install Guide
+# Pregnancy Copilot Skill v0.2.1 Install Guide
 
 This guide is for public testers who receive the zip package or clone the GitHub repository.
 
@@ -47,9 +47,9 @@ PYTHONPATH=src .venv/bin/python scripts/run_single_user_acceptance.py \
 
 Expected: output contains `"ok": true`.
 
-This check proves the default v0.1 path after profile onboarding:
+This check proves the default v0.2.1 path after profile onboarding:
 
-- normal chat returns `handled=false` after the profile is ready;
+- normal chat receives the minimal pregnancy context without triage or a medical event;
 - pregnancy symptom messages return a host `context_package`;
 - newer medical observations supersede older values in current state;
 - partner sharing is disabled by default;
@@ -67,7 +67,7 @@ Expected: output contains `"ok": true`.
 This check proves the Hermes/OpenClaw-style host contract:
 
 - a fresh profile triggers onboarding on the first incoming message;
-- non-pregnancy chat returns `handled=false` after onboarding;
+- ordinary chat returns `answer_with_context_package` but does not require a risk label or medical-state write;
 - pregnancy symptom messages return `context_package`;
 - daily logs are stored without visible red/yellow/green triage;
 - later medical observations become current;
@@ -87,18 +87,18 @@ Edit:
 pregnancy-data/memory/profile.yaml
 ```
 
-Set the pregnancy anchor fields, current focus, hospital context, and privacy defaults.
+The recommended path is progressive onboarding through the host Agent. LMP, EDD, or a dated gestational age is the only blocking anchor; other unavailable fields remain unknown and can be added later.
 
 Do not commit `pregnancy-data/`. It is personal medical memory.
 
-Check whether the profile still contains template values:
+Check whether the profile has a pregnancy time anchor:
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/check_profile_readiness.py \
   --data-root ./pregnancy-data
 ```
 
-If it returns `status=needs_review`, edit `pregnancy-data/memory/profile.yaml` before real use. This prevents the host model from treating example hospital, example gestational age, or template identity fields as facts.
+If it returns `status=needs_review`, provide LMP, EDD, or a dated current gestational age. The v0.2.1 template contains no realistic hospital, gestational-age, or medical-focus examples.
 
 ### Required first-run message
 
@@ -149,9 +149,8 @@ The JSON output includes:
 
 Recommended host behavior:
 
-- If `host_action.type=pass_through`, answer using the host Agent's normal chat flow.
 - If `host_action.type=collect_profile`, send `reply_text` as-is. Do not answer the symptom/report yet unless it is an immediate red-flag emergency.
-- If `host_action.type=answer_with_context_package`, use `context_package` as the LLM context and send the final answer back to `host_action.target_conversation_id`.
+- If `host_action.type=answer_with_context_package`, first classify semantic medical relevance with the host LLM, then answer using `context_package`. Ordinary chat receives no risk label and no medical-state write.
 - Prefer `current_medical_state.metrics.*.current` over older event history.
 - Write new report/lab values through `scripts/record_medical_observation.py`.
 - On a fresh profile, do not bypass `collect_profile` with the host Agent's general answer path.
@@ -167,6 +166,17 @@ PYTHONPATH=src .venv/bin/python scripts/process_channel_message.py \
 ```
 
 The bridge maps common fields into the Host Runtime request. For current testing, treat the host Agent's default chat as the pregnant user's conversation entrypoint. Feishu, WeChat, and other channels are replaceable gateways, not the skill's product boundary.
+
+For a host that manages multiple pregnant users, configure `pregnancy_id` outside the untrusted message payload:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/process_channel_message.py \
+  --data-root ./pregnancy-data-root \
+  --pregnancy-id pregnancy-a \
+  --json '{"channel":"agent_default","chat_id":"pregnancy-a-chat","sender_id":"pregnant-user-a","text":"建档：LMP 2026-05-01"}'
+```
+
+Each identity receives an independent directory under `identities/`. A different sender/channel/conversation cannot claim an existing identity without explicit endpoint binding.
 
 ## 5. Optional Feishu/Lark Testing
 
@@ -248,7 +258,7 @@ The host model should use medical sources and local clinical guidance when givin
 
 ## 8. Privacy Boundary
 
-Default v0.1.8 is pregnant-user-first:
+Default v0.2.1 is pregnant-user-first:
 
 - The pregnant user owns the data.
 - A technical partner may install the skill and channel, but partner access is not automatic consent.
@@ -271,7 +281,7 @@ Before changing versions or running migrations:
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/create_upgrade_backup.py \
   --data-root ./pregnancy-data \
-  --target-version v0.2
+  --target-version v0.2.1
 ```
 
 Backups are written under:
@@ -279,3 +289,12 @@ Backups are written under:
 ```text
 pregnancy-data/backups/
 ```
+
+The ZIP is local but not encrypted by default. Protect it with operating-system disk encryption and file permissions. v0.2.0 users can run the verified migration flow:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/upgrade_to_v021.py \
+  --data-root ./pregnancy-data
+```
+
+The command creates and verifies a backup before changing derived state. It clears old demo values only when the entire unedited v0.2.0 template matches; partially customized profiles are preserved and listed for manual review.

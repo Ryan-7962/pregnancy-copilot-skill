@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import re
 
 
 PRIVATE_DIRS = {"docs/private", "pregnancy-data", ".codex"}
@@ -16,6 +17,11 @@ PRIVATE_TEXT_MARKER_PARTS = {
     ("doc", "_26"),
     ("pi", "-rob"),
 }
+PRIVATE_TEXT_PATTERNS = [
+    re.compile(r"/" + r"Users/[^/\s]+/"),
+    re.compile(r"\b(?:ghp_|github_pat_|sk-|xox[baprs]-)[A-Za-z0-9_-]{12,}\b"),
+    re.compile(r"\bcli_[A-Za-z0-9]{12,}\b"),
+]
 
 
 def find_release_blockers(root: str | Path) -> list[str]:
@@ -44,8 +50,13 @@ def scan_dir(root: Path, directory: Path, blockers: list[str]) -> None:
         if path.name in PRIVATE_NAMES or path.suffix in PRIVATE_SUFFIXES:
             blockers.append(rel)
             continue
+        if path.name.startswith("._"):
+            blockers.append(rel)
+            continue
         if contains_private_marker(path):
             blockers.append(f"{rel}: contains private marker")
+        elif contains_private_pattern(path):
+            blockers.append(f"{rel}: contains private pattern")
 
 
 def contains_private_marker(path: Path) -> bool:
@@ -54,6 +65,14 @@ def contains_private_marker(path: Path) -> bool:
     except UnicodeDecodeError:
         return False
     return any("".join(parts) in text for parts in PRIVATE_TEXT_MARKER_PARTS)
+
+
+def contains_private_pattern(path: Path) -> bool:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return False
+    return any(pattern.search(text) for pattern in PRIVATE_TEXT_PATTERNS)
 
 
 def main() -> None:

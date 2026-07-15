@@ -9,7 +9,7 @@ import yaml
 
 from .context_builder import build_current_context
 from .medical_state import record_medical_observation
-from .storage import PregnancyDataStore, SCHEMA_VERSION
+from .storage import PregnancyDataStore, SCHEMA_VERSION, atomic_write_text
 
 
 @dataclass
@@ -19,12 +19,17 @@ class ProfileOnboardingUpdate:
     observations: list[dict[str, Any]] = field(default_factory=list)
 
 
-def extract_profile_onboarding_update(text: str) -> ProfileOnboardingUpdate:
+def extract_profile_onboarding_update(text: str, as_of: str | None = None) -> ProfileOnboardingUpdate:
     normalized = normalize_text(text)
     has_profile_marker = any(marker in normalized for marker in ["建档", "基础信息", "孕期锚点", "预产期", "LMP"])
     has_pregnancy_anchor = bool(re.search(r"\b\d{1,2}w[+\d]*d?\b|孕\s*\d{1,2}\s*[周w]", normalized, re.I))
     has_report_marker = any(marker in normalized for marker in ["NT", "CRL", "胎心", "B超", "产检", "报告"])
-    if not (has_profile_marker and (has_pregnancy_anchor or has_report_marker)):
+    has_structured_field = any(
+        marker in normalized
+        for marker in ["称呼", "出生", "年龄", "身高", "孕前体重", "当前体重", "所在城市", "产检医院", "既往史", "孕产史", "过敏", "医嘱", "下次产检"]
+    )
+    has_dated_anchor = bool(re.search(r"(?:LMP|EDD|预产期)[:：]?\s*\d{4}[-/.]\d{1,2}[-/.]\d{1,2}", normalized, re.I))
+    if not ((has_profile_marker and (has_pregnancy_anchor or has_report_marker or has_dated_anchor)) or has_structured_field):
         return ProfileOnboardingUpdate()
 
     updates: dict[str, Any] = {
@@ -35,6 +40,25 @@ def extract_profile_onboarding_update(text: str) -> ProfileOnboardingUpdate:
     if display_name:
         updates["display_name"] = display_name.strip()
         updates["profile_name"] = f"{display_name.strip()} Pregnancy Profile"
+
+    demographics: dict[str, Any] = {}
+    birth_year = match_first(normalized, [r"(\d{4})\s*年出生"])
+    age = match_first(normalized, [r"(?:年龄[:：]?\s*)?(\d{2})\s*岁"])
+    height = match_first(normalized, [r"身高[:：]?\s*([0-9]+(?:\.[0-9]+)?)\s*cm"])
+    pre_weight = match_first(normalized, [r"孕前体重[:：]?\s*([0-9]+(?:\.[0-9]+)?)\s*kg"])
+    current_weight = match_first(normalized, [r"当前体重[:：]?\s*([0-9]+(?:\.[0-9]+)?)\s*kg"])
+    if birth_year:
+        demographics["birth_year"] = int(birth_year)
+    if age:
+        demographics["age"] = int(age)
+    if height:
+        demographics["height_cm"] = float(height)
+    if pre_weight:
+        demographics["pre_pregnancy_weight_kg"] = float(pre_weight)
+    if current_weight:
+        demographics["current_weight_kg"] = float(current_weight)
+    if demographics:
+        updates["demographics"] = demographics
     baby_nickname = match_first(normalized, [r"(?:宝宝昵称|胎儿昵称|宝宝叫|胎儿叫)[:：]?\s*([^，,；;\n]+)"])
     if baby_nickname:
         updates["baby_nickname"] = baby_nickname.strip()
@@ -44,20 +68,27 @@ def extract_profile_onboarding_update(text: str) -> ProfileOnboardingUpdate:
     gestational_age = match_first(normalized, [r"(?:当前孕周|孕周)[:：]?\s*(\d{1,2}\s*w\s*\+?\s*\d?\s*d?)", r"孕\s*(\d{1,2})\s*周\s*\+?\s*(\d?)\s*天?"])
     if gestational_age:
         updates["current_gestational_age"] = normalize_gestational_age(gestational_age)
+        updates["gestational_age_as_of"] = as_of[:10] if as_of else None
+    lmp = match_first(normalized, [r"LMP[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})", r"末次月经[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})"])
+    if lmp:
+        updates["last_menstrual_period"] = normalize_date(lmp)
     due_date = match_first(normalized, [r"(?:EDD|预产期)[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})"])
     if due_date:
         updates["due_date"] = normalize_date(due_date)
 
-    city = match_first(normalized, [r"所在城市[:：]?\s*([^，,；;\n]+)", r"城市[:：]?\s*([^，,；;\n]+)"])
-    hospital_name = match_first(normalized, [r"就诊信息[:：]\s*([^，,；;\n]+)", r"(?:产检医院|医院)[:：]?\s*([^，,；;\n]+)"])
+    city = match_first(normalized, [r"所在城市[:：]?\s*([^，,。；;\n]+)", r"城市[:：]?\s*([^，,。；;\n]+)"])
+    hospital_name = match_first(normalized, [r"就诊信息[:：]\s*([^，,。；;\n]+)", r"(?:产检医院|医院)[:：]?\s*([^，,。；;\n]+)"])
     hospital: dict[str, Any] = {}
     if hospital_name:
         hospital["name"] = hospital_name.strip()
     if city:
         hospital["city"] = city.strip()
     if hospital:
-        hospital.setdefault("care_model", "孕期产检流程")
         updates["hospital"] = hospital
+
+    next_checkup = match_first(normalized, [r"(?:下次产检|下次检查)(?:约|[:：])?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})"])
+    if next_checkup:
+        updates["next_checkup"] = normalize_date(next_checkup)
 
     medications = []
     medication = match_first(normalized, [r"(?:目前服用|用药)[:：]?\s*([^。；;\n]+)"])
@@ -66,12 +97,27 @@ def extract_profile_onboarding_update(text: str) -> ProfileOnboardingUpdate:
     allergies = []
     if "无已知药物过敏" in normalized:
         allergies.append("无已知药物过敏")
+    elif allergy := match_first(normalized, [r"过敏[:：]\s*([^，,。；;\n]+)"]):
+        allergies.append(allergy.strip())
     baseline = {}
     if medications or allergies:
         baseline["medications"] = medications
         baseline["allergies"] = allergies
+    history = match_first(normalized, [r"既往史[:：]\s*([^，,。；;\n]+)"])
+    obstetric_history = match_first(normalized, [r"孕产史[:：]\s*([^，,。；;\n]+)"])
+    doctor_order = match_first(normalized, [r"(?:医生医嘱|医嘱)[:：]\s*([^，,。；;\n]+)"])
+    if history:
+        baseline["history"] = [history]
+    if obstetric_history:
+        baseline["obstetric_history"] = [obstetric_history]
+    if doctor_order:
+        baseline["doctor_orders"] = [doctor_order]
     if baseline:
         updates["medical_baseline"] = baseline
+
+    current_focus = match_first(normalized, [r"(?:当前关注|关注事项)[:：]\s*([^，,。；;\n]+)"])
+    if current_focus:
+        updates["current_focus"] = [current_focus]
 
     preferences = {}
     if "简体中文" in normalized:
@@ -97,9 +143,10 @@ def apply_profile_onboarding_update(
     raw_source_path: str,
 ) -> dict[str, Any]:
     profile_path = store.root / "memory" / "profile.yaml"
-    profile = store.load_profile()
-    deep_merge(profile, update.profile_updates)
-    profile_path.write_text(yaml.safe_dump(profile, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    with store.transaction_lock("profile"):
+        profile = store.load_profile()
+        deep_merge(profile, update.profile_updates)
+        atomic_write_text(profile_path, yaml.safe_dump(profile, allow_unicode=True, sort_keys=False))
 
     for observation in update.observations:
         observation.setdefault("source_event_id", source_event_id)
@@ -161,6 +208,7 @@ def extract_initial_observations(text: str, measured_at: str) -> list[dict[str, 
                     "unit": unit,
                     "measured_at": measured_at,
                     "status": "unknown",
+                    "source_confidence": "user_reported",
                     "interpretation": "建档信息数值摘录；未自动判断正常或异常，待按报告/医生原结论确认。",
                 }
             )
@@ -174,6 +222,7 @@ def extract_initial_observations(text: str, measured_at: str) -> list[dict[str, 
                 "value": placenta.strip(),
                 "measured_at": measured_at,
                 "status": "unknown",
+                "source_confidence": "user_reported",
                 "interpretation": "建档信息原文摘录；未自动判断正常或异常，待按报告/医生原结论确认。",
             }
         )

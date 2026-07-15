@@ -1,236 +1,121 @@
-# Memory System
+# Memory System v0.2.1
 
-Pregnancy Copilot v0.1 uses a local, auditable file memory system. It does not require a cloud database or vector database.
+Pregnancy Copilot 使用本地、可审计、可重建的文件记忆。无需云数据库或向量数据库。
 
-## Core Idea
-
-The system separates memory into six layers:
-
-1. Raw memory
-2. Event memory
-3. Medical state memory
-4. Source confidence and review memory
-5. Working context
-6. Generated artifacts
-
-This keeps original data safe while allowing summaries and prompts to be regenerated as the product improves.
-
-## 1. Raw Memory
-
-Raw user input is preserved under `pregnancy-data/inbox/`.
-
-Examples:
+## 1. 事实源与派生层
 
 ```text
-inbox/raw_feishu_messages/YYYY-MM-DD.md
-inbox/raw_dad_diary/YYYY-MM-DD.md
-inbox/raw_gemini_exports/
-inbox/raw_notebooklm_exports/
-inbox/raw_obsidian_notes/
+raw inbox                 原始输入，追加保存
+events.jsonl              结构化事件，追加保存
+medical_observations.jsonl 医疗观测完整历史，追加保存
+profile.yaml              用户确认或明确提供的基础档案
+        |
+        v
+current_medical_state.yaml 当前值、历史值、候选项
+current_context.md         宿主 LLM 的工作上下文
+daily_metrics.*            高频数据近期趋势
+generated artifacts        日志、周记、问诊清单和 SOP
 ```
 
-Raw memory is for traceability. The assistant should not read all raw memory for every answer.
+raw、events 和 medical observations 是审计依据。`current_*`、索引和作品都是可重建派生物，不能替代原始事实源。
 
-## 2. Event Memory
+## 2. 原始输入
 
-Structured events are appended to JSONL files under `pregnancy-data/events/`.
-
-Main file:
+有效的孕妇入口消息保存在：
 
 ```text
-events/events.jsonl
+inbox/raw_<channel>_messages/YYYY-MM-DD.md
 ```
 
-Each event includes:
+优先使用通道原始 `message_id`/`event_id` 做幂等键。普通闲聊也可保留原文，但不因此生成医学事件或风险状态。
 
-- `schema_version`
-- `event_id`
-- `event_type`
-- `timestamp`
-- `gestational_age`
-- `source`
-- `raw_source_path`
-- `user_message_summary`
-- `assistant_response_summary`
-- `risk_level`
-- `doctor_question_candidates`
-- `privacy_level`
+## 3. 结构化事件
 
-Events are append-only. Corrections should be new events, not edits to old events.
+`events/events.jsonl` 保存需要进入长期记忆的事件。每条记录包含事件 ID、时间、来源、原文引用、摘要、隐私级别以及适用时的风险信息。
 
-Medical observations use a dedicated append-only file:
+修正通过追加新记录表达，不回写删除旧事件。重复投递相同事件 ID 只保存一次，并发追加受文件锁保护。
 
-```text
-events/medical_observations.jsonl
-```
+## 4. 医疗观测时间线
 
-This file stores structured measurements such as placenta position, cervical length, thyroid labs, urine findings, fetal biometry, and doctor restrictions.
+`events/medical_observations.jsonl` 保存所有结构化医疗值。每条观测至少记录：
 
-## 3. Medical State Memory
+- `metric_key`、值和单位；
+- `measured_at` 与 `recorded_at`；
+- `status` 和 `source_confidence`；
+- `source_event_id`、`raw_source_path` 或明确的人工录入 provenance。
 
-Not every old medical value should remain current. Pregnancy measurements are time-sensitive, and later reports can resolve, supersede, or reactivate earlier risks.
+当前状态生成规则：
 
-The current effective medical state is regenerated into:
+1. 只让日期有效且可信度足够的观测竞争 current。
+2. 较新的有效观测成为 current；旧值进入 `previous_values`。
+3. 无日期、低可信度或显式 superseded 的观测进入 `candidates`。
+4. 候选不得覆盖 current。
+5. 所有旧值继续保留，用于变化趋势和审计。
+6. 不知道时保持 `unknown`，不能从上下文猜值。
 
-```text
-memory/current_medical_state.yaml
-memory/medical_observation_timeline.md
-```
+支持 `unknown`、`confirmed`、`corrected`、`superseded` 等生命周期状态。
 
-Rules:
+## 5. 档案与孕周
 
-- Preserve every original observation in `events/medical_observations.jsonl`.
-- Group observations by `metric_key`.
-- Use the latest `measured_at` value as `current`.
-- If the same metric has the same `measured_at`, use the later `recorded_at` value as `current`.
-- Move older values to `previous_values` with `effective_status: superseded`.
-- Give host LLMs `current` first, then history, so stale report data does not drive current medical reasoning.
-- Reject structured medical observations that lack `measured_at`; the host should ask the user for the report date instead of guessing.
-- If the current memory has no reliable fact for a question, the host should say it does not know or ask for the missing report text, date, value, unit, or doctor conclusion.
+`memory/profile.yaml` 保存用户明确提供的档案。新模板不包含仿真医院、孕周或医学事实。
 
-## 3.1 Daily Metrics Memory
+孕周优先根据 LMP 或 EDD 与当前日期动态计算。带记录日期的静态孕周只作为缺少时间锚点时的兼容回退，不能永久冒充当前孕周。
 
-High-frequency daily data such as weight, mood, diet, activity, and sleep is not stored as a medical observation by default. It is extracted from official non-private events into:
+建档允许多轮补充。缺少字段会列为待补充，但只有 pregnancy time anchor 是常规回答准备度的核心字段；紧急问题始终优先处理。
+
+## 6. 高频日常数据
+
+体重、血压、心情、饮食、活动和睡眠从非私密正式事件生成：
 
 ```text
 memory/daily_metrics.yaml
 memory/daily_metrics.md
 ```
 
-Rules:
+每个点保留日期和来源事件。体重提供 latest、previous 和 delta；其他类别保留近期摘要。缺失日期不补齐，原始事件仍是事实源。
 
-- Preserve the original daily record in `events/events.jsonl` and the generated daily log.
-- Extract quick-read summaries from `user_message_summary`, not from private raw text.
-- Weight entries are tracked as points with `value`, `unit`, `date`, and `source_event_id`.
-- The index exposes `latest`, `previous`, and `delta_kg` for simple trend comparison.
-- Mood, diet, activity, and sleep are kept as dated summary entries for recent context.
-- Private events are excluded from this index.
-- Missing daily data should stay missing; do not invent weight, mood, diet, activity, or sleep values.
+## 7. 工作上下文
 
-## 3.2 Source Confidence and Review Memory
+`memory/current_context.md` 聚合：
 
-Migrated Gemini, NotebookLM, or Obsidian histories are not all equal. v0.1.6 adds:
+- 动态孕周和 profile readiness；
+- 当前医学值、最近历史和待确认候选；
+- 高频日常指标；
+- 来源可信度与待核对事项；
+- 最近正式事件和医生问题。
 
-```text
-memory/source_confidence.yaml
-memory/open_review_items.yaml
-memory/gemini_state_summary.md
-```
+宿主 Agent 不需要每次扫描全部聊天历史。它读取这个最小上下文，再按需追溯 source path。
 
-Rules:
+## 8. 身份隔离
 
-- `report_verified`: backed by a report or health archive, but still preserve source path.
-- `user_reported`: useful symptom, habit, weight, mood, or correction signal.
-- `gemini_inferred`: discussion clue only; never a medical fact by itself.
-- `needs_review`: conflict, stale value, or missing source.
-- Raw Gemini chats are not read by default during Obsidian refined-state import.
-- Open review items should be resolved by a report, doctor conclusion, or explicit user confirmation before affecting current medical state.
-
-## 4. Working Context
-
-The runtime context is regenerated into:
+单孕妇部署会把可信 channel/conversation/sender 绑定到唯一根目录。多孕妇部署必须由宿主可信配置提供 `pregnancy_id`，每个身份写入：
 
 ```text
-memory/current_context.md
+pregnancy-data-root/identities/<pregnancy_id>/
 ```
 
-It reads:
+未绑定入口不能认领已有身份；消息 payload 中自报的 `pregnancy_id` 不可信。
 
-- `memory/profile.yaml`
-- `memory/current_medical_state.yaml`
-- `memory/source_confidence.yaml`
-- `memory/open_review_items.yaml`
-- official events from `events/events.jsonl`
-- recent live events
-- promoted low-risk historical imports
-- doctor question candidates
+## 9. 原子性与恢复
 
-Draft imports are excluded from working context until reviewed.
+- JSONL 追加和幂等检查在锁内完成。
+- profile、current state、current context 和核心索引使用临时文件加原子替换。
+- 升级前创建不覆盖旧快照的 ZIP，并校验成员完整性和路径安全。
+- 恢复只允许写入空目录，拒绝绝对路径和 `..`。
+- ZIP 默认未加密，部署者仍需使用文件权限和磁盘加密保护。
 
-Historical imports are treated conservatively:
+## 10. 隐私边界
 
-- green low-risk imported events can become memory hints
-- report, medication, yellow, and red items stay in manual review
-- imported AI summaries are not authoritative medical facts
+本地 `pregnancy-data/` 是长期事实源，不代表消息从未经过其他系统。聊天通道、宿主模型、主机管理员、备份介质和操作系统权限都有各自隐私政策。
 
-## 5. Generated Artifacts
+公开仓库、测试和发布包只能使用合成数据。Gemini 等历史导入内容在人工确认前只是线索，不能成为当前医疗事实。
 
-Artifacts are regenerated from event memory:
-
-```text
-daily_logs/YYYY-MM-DD.md
-husband_summaries/
-baby_diaries/
-weekly_reviews/
-doctor_questions/
-```
-
-Private events are hidden or represented as placeholders in shareable summaries.
-
-## Why This Design
-
-Pregnancy data is high-value and sensitive. The design optimizes for:
-
-- local-first control
-- raw data preservation
-- upgrade-safe migrations
-- traceable medical context
-- privacy-aware partner sharing
-- compatibility with different message channels
-
-## What v0.1 Does Not Yet Include
-
-v0.1 does not include:
-
-- semantic vector search
-- cloud sync
-- multi-user hosted accounts
-- automatic report OCR
-- doctor-grade diagnosis
-- full long-term summarization strategy across years
-
-These can be added later without replacing the core event log.
-
-## Install Check
-
-After installation, run:
+## 11. 重建
 
 ```bash
-PYTHONPATH=src python scripts/install_check.py --data-root /tmp/pregnancy-copilot-install-check
-```
-
-This checks whether local memory can be initialized, raw input can be saved, events can be appended, `current_context.md` can be generated, and daily logs can be written.
-
-## Safety Triage Memory
-
-Each event stores the triage result:
-
-- `risk_level`
-- `risk_reason`
-- `red_flags_detected`
-- `doctor_question_candidates`
-
-The triage system has two layers:
-
-- local rules for deterministic red/yellow/green fallback
-- optional semantic advisor for LLM-assisted escalation
-
-The semantic layer may upgrade risk but must not downgrade a rule-based red result.
-
-## Rebuild Memory
-
-After imports, manual review, or upgrades, rebuild derived memory:
-
-```bash
-PYTHONPATH=src python scripts/rebuild_memory.py \
+PYTHONPATH=src .venv/bin/python scripts/rebuild_memory.py \
   --data-root ./pregnancy-data \
-  --date 2026-05-05
+  --date 2026-07-15
 ```
 
-This regenerates:
-
-- `memory/current_context.md`
-- `memory/current_medical_state.yaml`
-- `memory/medical_timeline.md`
-- `memory/emotional_pattern.md`
-- `daily_logs/YYYY-MM-DD.md`
+该命令从事实源重建 current context、current medical state、医学时间线、情绪模式、日常指标和指定日期日志。

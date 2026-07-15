@@ -1,6 +1,8 @@
-# v0.1 Status and Gaps
+# Historical v0.1 Status and Gaps
 
 Date: 2026-06-10
+
+> Historical snapshot only. For current v0.2.1 behavior and release claims, use `README.md`, `CHANGELOG.md`, and `docs/PUBLIC_RELEASE_NOTES_v0.2.1.md`.
 
 ## Current Completion Estimate
 

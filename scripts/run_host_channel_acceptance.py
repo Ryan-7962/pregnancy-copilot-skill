@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+import yaml
 
 from pregnancy_copilot.data_init import initialize_data_dir
 
@@ -46,8 +47,9 @@ def run_host_channel_acceptance(
         "host_channel_symptom_handled": symptom["handled"] is True
         and symptom["host_action"]["type"] == "answer_with_context_package"
         and symptom["context_package"]["channel"] == channel,
-        "host_channel_general_chat_passes_through": general_chat["handled"] is False
-        and general_chat["host_action"]["type"] == "pass_through",
+        "host_channel_general_chat_uses_context": general_chat["handled"] is True
+        and general_chat["intent"] == "pregnancy_context"
+        and general_chat["host_action"]["type"] == "answer_with_context_package",
         "raw_agent_default_inbox_written": inbox_path.exists(),
     }
     return {
@@ -82,17 +84,14 @@ def run_host_channel_acceptance(
 def make_profile_ready(data_root: str | Path) -> None:
     root = initialize_data_dir(data_root)
     profile_path = root / "memory" / "profile.yaml"
-    profile_text = profile_path.read_text(encoding="utf-8")
-    replacements = {
-        'profile_name: "Example Pregnancy Profile"': 'profile_name: "Acceptance Pregnancy Profile"',
-        'display_name: "孕妇"': 'display_name: "验收用户"',
-        'baby_nickname: "宝宝"': 'baby_nickname: "验收宝宝"',
-        'current_gestational_age: "20w0d"': 'current_gestational_age: "23w1d"',
-        'name: "示例医院"': 'name: "验收医院"',
-    }
-    for old, new in replacements.items():
-        profile_text = profile_text.replace(old, new)
-    profile_path.write_text(profile_text, encoding="utf-8")
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile.update(
+        profile_name="Acceptance Pregnancy Profile",
+        display_name="验收用户",
+        baby_nickname="验收宝宝",
+        current_gestational_age="23w1d",
+    )
+    profile_path.write_text(yaml.safe_dump(profile, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
 def main() -> None:

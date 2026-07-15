@@ -79,6 +79,8 @@ def should_exclude(path: Path, rel: str, excluded_dirs: set[str] | None = None) 
         return True
     if path.name in EXCLUDED_NAMES:
         return True
+    if path.name.startswith("._"):
+        return True
     return path.is_file() and path.suffix in EXCLUDED_SUFFIXES
 
 

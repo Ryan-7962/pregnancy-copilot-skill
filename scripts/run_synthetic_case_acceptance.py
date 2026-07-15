@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+import yaml
 
 from pregnancy_copilot.data_init import initialize_data_dir
 
@@ -77,17 +78,14 @@ def run_synthetic_case_acceptance(
 def make_profile_ready(data_root: str | Path) -> None:
     root = initialize_data_dir(data_root)
     profile_path = root / "memory" / "profile.yaml"
-    profile_text = profile_path.read_text(encoding="utf-8")
-    replacements = {
-        'profile_name: "Example Pregnancy Profile"': 'profile_name: "Synthetic Pregnancy Profile"',
-        'display_name: "孕妇"': 'display_name: "合成测试用户"',
-        'baby_nickname: "宝宝"': 'baby_nickname: "合成测试宝宝"',
-        'current_gestational_age: "20w0d"': 'current_gestational_age: "23w1d"',
-        'name: "示例医院"': 'name: "合成测试医院"',
-    }
-    for old, new in replacements.items():
-        profile_text = profile_text.replace(old, new)
-    profile_path.write_text(profile_text, encoding="utf-8")
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile.update(
+        profile_name="Synthetic Pregnancy Profile",
+        display_name="合成测试用户",
+        baby_nickname="合成测试宝宝",
+        current_gestational_age="23w1d",
+    )
+    profile_path.write_text(yaml.safe_dump(profile, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
 def main() -> None:

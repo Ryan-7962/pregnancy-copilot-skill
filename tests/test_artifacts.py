@@ -8,6 +8,7 @@ from pregnancy_copilot.artifacts import (
 )
 from pregnancy_copilot.storage import PregnancyDataStore, SCHEMA_VERSION
 from scripts.init_data_dir import initialize_data_dir
+import yaml
 
 
 def test_husband_summary_excludes_private_lines_and_keeps_actionable_support():
@@ -186,7 +187,9 @@ def test_write_weekly_artifacts_creates_review_and_safe_baby_diary(tmp_path):
     initialize_data_dir(tmp_path)
     store = PregnancyDataStore(tmp_path)
     profile = tmp_path / "memory" / "profile.yaml"
-    profile.write_text(profile.read_text(encoding="utf-8").replace('baby_nickname: "宝宝"', 'baby_nickname: "小豆豆"'), encoding="utf-8")
+    profile_data = yaml.safe_load(profile.read_text(encoding="utf-8"))
+    profile_data["baby_nickname"] = "小豆豆"
+    profile.write_text(yaml.safe_dump(profile_data, allow_unicode=True, sort_keys=False), encoding="utf-8")
     store.append_event(
         {
             "schema_version": SCHEMA_VERSION,

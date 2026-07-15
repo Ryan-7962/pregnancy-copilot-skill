@@ -115,17 +115,17 @@
       }
     },
     {
-      "id": "general_chat_pass_through",
-      "pattern": "non-pregnancy general chat should stay with host agent",
+      "id": "general_chat_with_context",
+      "pattern": "ordinary chat keeps minimal pregnancy context without triage or medical event",
       "message": "推荐一首适合晚上听的歌。",
       "channel": "agent_default",
       "timestamp": "2026-05-16T20:18:00+08:00",
       "expected": {
-        "handled": false,
-        "intent": "general_chat",
+        "handled": true,
+        "intent": "pregnancy_context",
         "triage_required": false,
         "risk_level": "not_applicable",
-        "host_action_type": "pass_through"
+        "host_action_type": "answer_with_context_package"
       }
     }
   ]

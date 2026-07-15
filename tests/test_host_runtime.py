@@ -4,6 +4,7 @@ from pregnancy_copilot.medical_state import read_current_medical_state
 from pregnancy_copilot.storage import PregnancyDataStore
 from scripts.process_host_message import run_host_message
 from tests.helpers import make_profile_ready
+from pregnancy_copilot.identity import IdentityEndpoint, authorize_local_endpoint
 
 
 def test_process_host_message_initializes_data_root_and_returns_reply(tmp_path):
@@ -141,14 +142,7 @@ def test_process_host_message_answers_after_profile_is_ready(tmp_path):
         ),
         data_root=tmp_path,
     )
-    profile_path = tmp_path / "memory" / "profile.yaml"
-    profile_text = profile_path.read_text(encoding="utf-8")
-    profile_text = profile_text.replace('profile_name: "Example Pregnancy Profile"', 'profile_name: "Test Pregnancy Profile"')
-    profile_text = profile_text.replace('display_name: "孕妇"', 'display_name: "测试用户"')
-    profile_text = profile_text.replace('baby_nickname: "宝宝"', 'baby_nickname: "测试宝宝"')
-    profile_text = profile_text.replace('current_gestational_age: "20w0d"', 'current_gestational_age: "23w1d"')
-    profile_text = profile_text.replace('name: "示例医院"', 'name: "测试医院"')
-    profile_path.write_text(profile_text, encoding="utf-8")
+    make_profile_ready(tmp_path)
 
     result = process_host_message(
         HostMessageRequest(
@@ -182,6 +176,10 @@ def test_host_runtime_supports_optional_partner_extension_in_one_memory(tmp_path
             timestamp="2026-05-07T13:41:00+08:00",
         ),
         data_root=tmp_path,
+    )
+    authorize_local_endpoint(
+        tmp_path,
+        IdentityEndpoint(channel="hermes", conversation_id="husband-window", sender_id="husband"),
     )
     partner = process_host_message(
         HostMessageRequest(

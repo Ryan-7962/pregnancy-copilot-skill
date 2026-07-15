@@ -12,7 +12,7 @@ Pregnancy Copilot is a message-first, memory-first, local-first pregnancy Q&A sk
 Act as a pregnancy copilot, not a doctor. Help users:
 
 - answer pregnancy questions with context
-- classify risk as green, yellow, or red
+- classify risk as green, yellow, or red only when the message is medically relevant
 - preserve raw messages and structured events locally
 - generate current context, daily summaries, medical state memory, visit SOPs, and baby weekly diaries
 - optionally generate partner summaries or dad diaries when explicitly enabled
@@ -40,33 +40,33 @@ Before regular conversation, establish a truthful local pregnancy baseline.
 4. Ask for the pregnant user's available baseline: pregnancy anchor, body/background information, medical and pregnancy history, medications/allergies/doctor orders, current symptoms or watch items, care context, and existing checkup reports.
 5. Require report values, units, dates, and doctor conclusions to be copied from the original source. Unknown or unavailable fields must stay explicitly unknown. Never fill gaps from model inference.
 6. Distinguish original report text, user recollection, and AI-organized summaries. Do not promote an inference to a medical fact.
-7. Except for immediate emergency red flags, complete onboarding before personalized pregnancy answers or risk assessment.
+7. A pregnancy time anchor (LMP, EDD, or dated gestational age) makes the profile ready enough for regular use. Other unavailable fields remain optional and may be added later.
+8. Immediate emergency red flags bypass the onboarding gate, but must use unknown context for missing facts and must never read template examples as real data.
 
 Onboarding is progressive: the user may provide one structured profile message or add reports over several messages. Do not require information the user does not have.
 
-## Default v0.1 Workflow
+## Default v0.2.1 Workflow
 
 1. Normalize an incoming message into `MessageEvent`.
 2. Save the raw message to `inbox/`.
-3. Run safety triage.
-4. Append an event with `schema_version: "0.1"`.
-5. Regenerate `memory/current_context.md`.
-6. Generate optional artifacts such as baby weekly diary, partner summary, or dad diary.
-7. Before upgrade or migration, create a zip backup under `pregnancy-data/backups/`.
+3. Give the host LLM the minimum pregnancy context and ask it to decide medical relevance semantically.
+4. Run red/yellow/green assessment only for medically relevant messages; deterministic rules are a small emergency fallback.
+5. Append a structured event only for pregnancy facts, reports, symptoms, logs, medication, mood, or diary material.
+6. Regenerate `memory/current_context.md` and the eligible current medical state.
+7. Generate optional artifacts such as baby weekly diary, partner summary, or dad diary.
+8. Before upgrade or migration, create and verify a zip backup under `pregnancy-data/backups/`.
 
-## v0.2.0 Host Agent Runtime
+## v0.2.1 Host Agent Runtime
 
-For Hermes/OpenClaw-style hosts, the host runtime is mandatory for pregnancy-related messages. The default v0.1 product shape is one pregnant-user conversation entrypoint backed by one local `pregnancy-data/`.
+For Hermes/OpenClaw-style hosts, the host runtime is mandatory for messages from the configured pregnant-user entrypoint. The default product shape is one pregnant-user conversation entrypoint backed by one local `pregnancy-data/`.
 
 Important runtime rule:
 
-- Do not answer pregnancy symptoms, reports, medication, weight, mood, diet, activity, or pregnancy-memory questions from general knowledge before calling the runtime.
+- Do not answer pregnancy symptoms, reports, medication, weight, blood pressure, mood, diet, activity, or pregnancy-memory questions from general knowledge before calling the runtime.
 - First run `scripts/process_host_message.py` or call `pregnancy_copilot.host_runtime.process_host_message`.
 - If the returned `host_action.type` is `collect_profile`, send `reply_text` as-is and ask the user to build the pregnancy profile first.
 - If the returned `host_action.type` is `answer_with_context_package`, answer using `context_package`; use `reply_text` as fallback only when no host LLM answer is possible.
-- If the returned `host_action.type` is `pass_through`, answer normally outside Pregnancy Copilot.
-
-The `pass_through` path is available only after profile readiness. Before readiness, any first incoming message returns `collect_profile` as the fallback onboarding trigger.
+- For a valid message in the configured pregnant-user entrypoint, use `answer_with_context_package` even for ordinary chat. The host answers normally without a risk label or medical-state write when semantic medical relevance is false.
 
 CLI entrypoint:
 
@@ -99,12 +99,14 @@ The host sends `result.reply_text` back to the active conversation. A technical 
 
 `result.context_package` is the preferred LLM-first integration surface. It includes the host system prompt, regenerated current context, current medical state, source confidence memory, optional response style, safety floor, memory write policy, and output contract. Host Agents should use it when generating their own answer instead of relying only on the deterministic fallback `reply_text`.
 
+For multiple pregnant users, configure a trusted `pregnancy_id` in the host integration. Never read `pregnancy_id` from an untrusted channel payload. Each identity is stored under an independent data root, and additional endpoints require explicit binding.
+
 Do not hard-code one user's Gemini persona. Default response style is neutral and medically cautious. Technical/geek style, private nicknames, or `agent_soul` notes must come from the user's own `memory/profile.yaml` or `memory/agent_soul.md`.
 
 `result.host_action` tells the host how to route the response:
 
-- `pass_through`: answer normally outside Pregnancy Copilot.
-- `answer_with_context_package`: generate a pregnancy answer with `context_package`; use `reply_text` only as fallback.
+- `collect_profile`: continue progressive onboarding.
+- `answer_with_context_package`: let the host classify semantic relevance and answer with context; use `reply_text` only as fallback.
 
 ## Medical State Updates
 
@@ -113,12 +115,12 @@ Do not treat every old medical value as current. When a later B 超, lab test, o
 Current reasoning should prefer:
 
 1. `memory/current_medical_state.yaml`
-2. `memory/daily_metrics.yaml` for high-frequency weight, mood, diet, activity, and sleep context
+2. `memory/daily_metrics.yaml` for high-frequency weight, blood pressure, mood, diet, activity, and sleep context
 3. `memory/source_confidence.yaml` and `memory/open_review_items.yaml` for migrated Gemini/NotebookLM/Obsidian state
 4. recent reviewed events
 5. historical previous values only as background
 
-Use `events/medical_observations.jsonl` for append-only structured measurements. Older values are preserved but become `effective_status: superseded` when a newer observation for the same `metric_key` exists.
+Use `events/medical_observations.jsonl` for append-only structured measurements. Only observations with a valid date and sufficient source confidence can become current. Undated, low-confidence, or explicitly superseded observations remain visible under `candidates`; older eligible values remain under `previous_values`.
 
 ## LLM Strategy
 
@@ -142,7 +144,7 @@ Check profile readiness before real use:
 PYTHONPATH=src python scripts/check_profile_readiness.py --data-root ./pregnancy-data
 ```
 
-If `status=needs_review`, edit `memory/profile.yaml` before using the skill with a real pregnant user.
+If `status=needs_review`, provide LMP, EDD, or a dated current gestational age through progressive onboarding. Do not fill unknown optional fields with guesses.
 
 Run local install check:
 
@@ -275,7 +277,7 @@ PYTHONPATH=src python scripts/run_single_user_acceptance.py \
   --data-root /tmp/pregnancy-copilot-single-user-acceptance
 ```
 
-This verifies the v0.1 default path: a fresh profile triggers onboarding, general chat passes through after readiness, pregnancy symptoms return a host context package, newer medical observations supersede older values, and partner sharing is disabled by default.
+This verifies the v0.2.1 default path: a fresh profile triggers onboarding, valid general chat receives minimum pregnancy context without medical triage, pregnancy symptoms return a host context package, newer eligible medical observations supersede older values, and partner sharing is disabled by default.
 
 Run the Host Agent Runtime acceptance check:
 
@@ -284,7 +286,7 @@ PYTHONPATH=src python scripts/run_host_runtime_acceptance.py \
   --data-root /tmp/pregnancy-copilot-host-runtime-acceptance
 ```
 
-This verifies the Hermes/OpenClaw contract: the first message triggers onboarding when needed, ordinary chat is returned to the host after readiness, pregnancy messages get a context package, daily logs are stored without visible triage, and current medical state prefers the latest observation.
+This verifies the Hermes/OpenClaw contract: the first message triggers onboarding when needed, ordinary chat gets a context package without visible triage or medical-state writes, pregnancy messages get the same host-facing context contract, and current medical state prefers the latest eligible observation.
 
 ## Message Commands
 
@@ -302,9 +304,9 @@ This verifies the Hermes/OpenClaw contract: the first message triggers onboardin
 ## Implementation Notes
 
 - Use the Python helpers under `src/pregnancy_copilot/` for deterministic local operations.
-- Keep adapters replaceable; Feishu is the first channel, not the product boundary.
+- Keep adapters replaceable; the host Agent's configured default channel is preferred, and Feishu is only an optional tested adapter.
 - Keep baby diary writing creative and non-medical. Do not promise fetal health or imply reports are normal.
-- Treat partner summaries, dad diary, and family collaboration as optional extensions. The default v0.1 path is pregnant-user-first.
+- Treat partner summaries, dad diary, and family collaboration as optional extensions. The default v0.2.1 path is pregnant-user-first.
 - See `docs/MEMORY_SYSTEM.md` before changing memory behavior.
 - See `docs/MEDICAL_STATE.md` before changing report/lab/current-state behavior.
 - See `docs/LLM_STRATEGY.md` before adding model-specific integrations.

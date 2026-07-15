@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 from typing import Any
+import yaml
 
 from pregnancy_copilot.data_init import initialize_data_dir
 from pregnancy_copilot.host_runtime import HostMessageRequest, process_host_message
@@ -71,9 +72,10 @@ def run_single_user_acceptance(data_root: str | Path) -> dict[str, Any]:
         "pregnant_user_default": profile["privacy"]["default_privacy_level"] == "summary",
         "partner_share_disabled_by_default": profile["preferences"].get("partner_share_default") == "private"
         and profile["preferences"].get("husband_share_default") == "private",
-        "general_chat_not_handled": general.handled is False
-        and general.intent == "general_chat"
-        and general.context_package is None,
+        "general_chat_uses_minimal_context": general.handled is True
+        and general.intent == "pregnancy_context"
+        and general.context_package is not None
+        and general.risk_level == "not_applicable",
         "pregnancy_symptom_has_context_package": symptom.handled is True
         and symptom.intent == "medical_triage"
         and symptom.context_package is not None,
@@ -119,17 +121,14 @@ def run_single_user_acceptance(data_root: str | Path) -> dict[str, Any]:
 def make_profile_ready(data_root: str | Path) -> None:
     root = initialize_data_dir(data_root)
     profile_path = root / "memory" / "profile.yaml"
-    profile_text = profile_path.read_text(encoding="utf-8")
-    replacements = {
-        'profile_name: "Example Pregnancy Profile"': 'profile_name: "Acceptance Pregnancy Profile"',
-        'display_name: "孕妇"': 'display_name: "验收用户"',
-        'baby_nickname: "宝宝"': 'baby_nickname: "验收宝宝"',
-        'current_gestational_age: "20w0d"': 'current_gestational_age: "23w1d"',
-        'name: "示例医院"': 'name: "验收医院"',
-    }
-    for old, new in replacements.items():
-        profile_text = profile_text.replace(old, new)
-    profile_path.write_text(profile_text, encoding="utf-8")
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    profile.update(
+        profile_name="Acceptance Pregnancy Profile",
+        display_name="验收用户",
+        baby_nickname="验收宝宝",
+        current_gestational_age="23w1d",
+    )
+    profile_path.write_text(yaml.safe_dump(profile, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
 
 def main() -> None:
