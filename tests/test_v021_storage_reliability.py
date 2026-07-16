@@ -115,7 +115,7 @@ def test_concurrent_duplicate_delivery_is_written_once(tmp_path):
 
 
 def test_runtime_version_matches_release_version():
-    assert pregnancy_copilot.__version__ == "0.2.1"
+    assert pregnancy_copilot.__version__ == "0.4.0"
 
 
 def test_current_context_uses_atomic_write(tmp_path, monkeypatch):

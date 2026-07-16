@@ -21,14 +21,20 @@ class ProfileOnboardingUpdate:
 
 def extract_profile_onboarding_update(text: str, as_of: str | None = None) -> ProfileOnboardingUpdate:
     normalized = normalize_text(text)
-    has_profile_marker = any(marker in normalized for marker in ["建档", "基础信息", "孕期锚点", "预产期", "LMP"])
+    has_profile_marker = any(marker in normalized for marker in ["建档", "基础信息", "孕期锚点", "预产期", "末次月经", "LMP"])
     has_pregnancy_anchor = bool(re.search(r"\b\d{1,2}w[+\d]*d?\b|孕\s*\d{1,2}\s*[周w]", normalized, re.I))
     has_report_marker = any(marker in normalized for marker in ["NT", "CRL", "胎心", "B超", "产检", "报告"])
     has_structured_field = any(
         marker in normalized
         for marker in ["称呼", "出生", "年龄", "身高", "孕前体重", "当前体重", "所在城市", "产检医院", "既往史", "孕产史", "过敏", "医嘱", "下次产检"]
     )
-    has_dated_anchor = bool(re.search(r"(?:LMP|EDD|预产期)[:：]?\s*\d{4}[-/.]\d{1,2}[-/.]\d{1,2}", normalized, re.I))
+    has_dated_anchor = bool(
+        re.search(
+            r"(?:LMP|EDD|预产期|末次月经)(?:是|为)?[:：]?\s*\d{4}[-/.]\d{1,2}[-/.]\d{1,2}",
+            normalized,
+            re.I,
+        )
+    )
     if not ((has_profile_marker and (has_pregnancy_anchor or has_report_marker or has_dated_anchor)) or has_structured_field):
         return ProfileOnboardingUpdate()
 
@@ -69,7 +75,13 @@ def extract_profile_onboarding_update(text: str, as_of: str | None = None) -> Pr
     if gestational_age:
         updates["current_gestational_age"] = normalize_gestational_age(gestational_age)
         updates["gestational_age_as_of"] = as_of[:10] if as_of else None
-    lmp = match_first(normalized, [r"LMP[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})", r"末次月经[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})"])
+    lmp = match_first(
+        normalized,
+        [
+            r"LMP(?:是|为)?[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})",
+            r"末次月经(?:是|为)?[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})",
+        ],
+    )
     if lmp:
         updates["last_menstrual_period"] = normalize_date(lmp)
     due_date = match_first(normalized, [r"(?:EDD|预产期)[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})"])

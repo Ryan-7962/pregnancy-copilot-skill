@@ -1,4 +1,4 @@
-# Memory System v0.2.1
+# Memory System v0.4.0
 
 Pregnancy Copilot 使用本地、可审计、可重建的文件记忆。无需云数据库或向量数据库。
 
@@ -15,6 +15,11 @@ current_medical_state.yaml 当前值、历史值、候选项
 current_context.md         宿主 LLM 的工作上下文
 daily_metrics.*            高频数据近期趋势
 generated artifacts        日志、周记、问诊清单和 SOP
+onboarding_state.yaml      教程进度与运行偏好（非医疗事实）
+daily_conversation_index   每日对话覆盖索引
+prenatal_plan.yaml         产检计划、改期历史与提醒状态
+external_sources/index     未验证外部来源 capture/finalization 历史
+external_content_index.md  按需检索的精简外部来源索引
 ```
 
 raw、events 和 medical observations 是审计依据。`current_*`、索引和作品都是可重建派生物，不能替代原始事实源。
@@ -61,7 +66,7 @@ inbox/raw_<channel>_messages/YYYY-MM-DD.md
 
 孕周优先根据 LMP 或 EDD 与当前日期动态计算。带记录日期的静态孕周只作为缺少时间锚点时的兼容回退，不能永久冒充当前孕周。
 
-建档允许多轮补充。缺少字段会列为待补充，但只有 pregnancy time anchor 是常规回答准备度的核心字段；紧急问题始终优先处理。
+建档允许多轮补充。缺少字段会列为待补充，但不阻断当前问题；宿主必须先回答，再附加最多一个简短引导。紧急问题始终优先处理。
 
 ## 6. 高频日常数据
 
@@ -86,7 +91,15 @@ memory/daily_metrics.md
 
 宿主 Agent 不需要每次扫描全部聊天历史。它读取这个最小上下文，再按需追溯 source path。
 
-## 8. 身份隔离
+小红书等外部内容不进入默认工作上下文。只有用户提到帖子、来源 ID，或查询命中来源标题/主题时，`external_content_memory` 才返回最多数条精简元数据。完整 OCR、转写和审计留在 `external_sources/raw/`，且始终标记为 `social_media_unverified`。
+
+## 8. 外部来源历史
+
+`external_sources/index.jsonl` 追加 capture 与 finalization 事件；同一帖子内容未变化时幂等，内容变化时追加新版本。`memory/external_content_index.md` 是可重建索引，不是医学事实源。
+
+Cookie、API Key、签名媒体 URL 和 raw HTML 不持久化。下载媒体在宿主完成识别后默认删除；显式开启 retention 才保留。外部内容不能写入 profile、medical observations、用药、医嘱或 current medical state。
+
+## 9. 身份隔离
 
 单孕妇部署会把可信 channel/conversation/sender 绑定到唯一根目录。多孕妇部署必须由宿主可信配置提供 `pregnancy_id`，每个身份写入：
 
@@ -96,7 +109,7 @@ pregnancy-data-root/identities/<pregnancy_id>/
 
 未绑定入口不能认领已有身份；消息 payload 中自报的 `pregnancy_id` 不可信。
 
-## 9. 原子性与恢复
+## 10. 原子性与恢复
 
 - JSONL 追加和幂等检查在锁内完成。
 - profile、current state、current context 和核心索引使用临时文件加原子替换。
@@ -104,13 +117,13 @@ pregnancy-data-root/identities/<pregnancy_id>/
 - 恢复只允许写入空目录，拒绝绝对路径和 `..`。
 - ZIP 默认未加密，部署者仍需使用文件权限和磁盘加密保护。
 
-## 10. 隐私边界
+## 11. 隐私边界
 
 本地 `pregnancy-data/` 是长期事实源，不代表消息从未经过其他系统。聊天通道、宿主模型、主机管理员、备份介质和操作系统权限都有各自隐私政策。
 
 公开仓库、测试和发布包只能使用合成数据。Gemini 等历史导入内容在人工确认前只是线索，不能成为当前医疗事实。
 
-## 11. 重建
+## 12. 重建
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/rebuild_memory.py \
@@ -119,3 +132,11 @@ PYTHONPATH=src .venv/bin/python scripts/rebuild_memory.py \
 ```
 
 该命令从事实源重建 current context、current medical state、医学时间线、情绪模式、日常指标和指定日期日志。
+
+## 13. 每日归并
+
+`scripts/run_daily_consolidation.py` 统计指定日期的本地原文和结构化事件，重建 `daily_logs/YYYY-MM-DD.md` 与 `memory/daily_conversation_index.yaml`。它不从闲聊中推断医学事实。宿主提供的摘要会标记为 `ai_organized`。
+
+## 14. 产检计划与提醒
+
+`memory/prenatal_plan.yaml` 保留预约来源、当前日期和改期历史。提醒命令只返回 channel-neutral action，实际定时和发送由宿主 Agent 或操作系统负责。同一 item/lead-date 被 claim 后不会重复返回；改期会重置新的提醒周期。

@@ -1,4 +1,4 @@
-# User Testing: v0.2.1 Public Alpha
+# User Testing: v0.3.0 Public Alpha
 
 Use fictional data only. Do not paste real names, addresses, account IDs, reports, or private chat exports into public issues.
 
@@ -8,7 +8,11 @@ Use fictional data only. Do not paste real names, addresses, account IDs, report
 .venv/bin/python -m pytest -q
 ```
 
-The v0.2.1 adversarial coverage includes:
+The v0.3.0 adversarial coverage includes:
+
+- answer-first onboarding, tutorial progression, skip/resume, and no-record controls;
+- daily consolidation, private placeholders, and idempotent daily indexes;
+- prenatal schedule history, source separation, and one-time reminder claims;
 
 - pregnancy diet/travel questions that have no old router keyword;
 - ordinary chat with context but no triage/event;
@@ -47,7 +51,7 @@ Each command must return `"ok": true`.
 
 ### Fresh installation
 
-The host proactively sends onboarding when possible. Otherwise the first incoming message returns `collect_profile`.
+The host proactively sends a non-blocking onboarding welcome when possible. Otherwise the first incoming message returns `answer_with_context_package` plus one optional `tutorial_nudge`.
 
 Users may provide LMP, EDD, or dated gestational age first and add optional fields later. Unknown fields remain unknown.
 

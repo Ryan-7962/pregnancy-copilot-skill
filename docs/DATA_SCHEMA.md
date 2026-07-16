@@ -1,6 +1,20 @@
-# Data Schema: Pregnancy Copilot Skill v0.2.1
+# Data Schema: Pregnancy Copilot Skill v0.4.0
 
-The persisted schema version remains `0.1` in this release. v0.2.1 tightens selection, provenance, identity, and write guarantees without rewriting append-only history.
+The persisted schema version remains `0.1`. v0.4.0 adds optional external-source history and a compact derived index without rewriting append-only pregnancy or medical history.
+
+## External Content
+
+```text
+external_sources/
+  raw/<YYYYMMDD>-xhs-<post-id>[-vN].md
+  media/<post-id>/P1.jpg
+  index.jsonl
+memory/external_content_index.md
+```
+
+`external_sources/index.jsonl` is append-only. Capture events preserve canonical query-free URLs, normalized metadata, content hashes, source confidence, and a raw-record path. Finalization events preserve host OCR/transcript/audit output and always include `source_confidence: social_media_unverified` and `medical_fact_update: false`.
+
+Signed media URLs, raw HTML, Cookie values, and API keys are never persisted. `memory/external_content_index.md` is derived and compact; full OCR/transcripts stay in the source record and are loaded only through relevant-source lookup.
 
 ## Principles
 
@@ -22,10 +36,13 @@ pregnancy-data/
 ├── memory/
 │   ├── identity_binding.yaml
 │   ├── profile.yaml
+│   ├── onboarding_state.yaml
 │   ├── current_context.md
 │   ├── current_medical_state.yaml
 │   ├── medical_observation_timeline.md
-│   └── daily_metrics.yaml
+│   ├── daily_metrics.yaml
+│   ├── daily_conversation_index.yaml
+│   └── prenatal_plan.yaml
 ├── reports/
 ├── daily_logs/
 ├── weekly_reviews/
@@ -192,6 +209,18 @@ days:
 ```
 
 Missing readings remain missing. The index does not infer a clinical interpretation from a numeric change.
+
+## Onboarding State
+
+`memory/onboarding_state.yaml` stores interaction UX state, completed tutorial topics, and daily/reminder preferences. It is not a medical record. Tutorial completion is state-based and independent of a fixed message count.
+
+## Daily Conversation Index
+
+`memory/daily_conversation_index.yaml` stores per-day message/event counts, visible intent/risk counts, raw source paths, open doctor-question count, and the daily-log path. Optional host summaries are marked `ai_organized` with `medical_fact_effect: none`.
+
+## Prenatal Plan
+
+`memory/prenatal_plan.yaml` stores source-aware items. `scheduled` items must come from explicit user, clinician, or verified-report input. Generic guideline items remain `suggested` and require a guideline source. Date changes append the old date to `schedule_history`; reminder claims use `last_sent_for_date` for idempotency.
 
 ## Identity Binding
 

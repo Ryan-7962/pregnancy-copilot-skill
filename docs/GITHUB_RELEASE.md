@@ -1,6 +1,6 @@
 # GitHub Release Guide
 
-Current public version target: `v0.2.1` Public Alpha.
+Current public version target: `v0.4.0` Public Alpha.
 
 ## Release Gates
 
@@ -16,10 +16,10 @@ Current public version target: `v0.2.1` Public Alpha.
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/build_release_package.py \
   --source . \
-  --target /tmp/pregnancy-copilot-skill-v0.2.1-release
+  --target /tmp/pregnancy-copilot-skill-v0.4.0-release
 
 PYTHONPATH=src .venv/bin/python scripts/release_check.py \
-  --root /tmp/pregnancy-copilot-skill-v0.2.1-release
+  --root /tmp/pregnancy-copilot-skill-v0.4.0-release
 ```
 
 Run tests in an extracted copy, then rebuild the final release directory so generated `__pycache__` files are not included in the ZIP.
@@ -30,10 +30,10 @@ Use a clean clone of the public repository. Synchronize only the clean release d
 
 ```bash
 git add .
-git commit -m "Release Pregnancy Copilot Skill v0.2.1"
-git tag -a v0.2.1 -m "Pregnancy Copilot Skill v0.2.1"
+git commit -m "Release Pregnancy Copilot Skill v0.4.0"
+git tag -a v0.4.0 -m "Pregnancy Copilot Skill v0.4.0"
 git push origin main
-git push origin v0.2.1
+git push origin v0.4.0
 ```
 
-Create the GitHub Release from `docs/PUBLIC_RELEASE_NOTES_v0.2.1.md`, upload `pregnancy-copilot-skill-v0.2.1.zip`, and verify the downloaded SHA256.
+Create the GitHub Release from `docs/PUBLIC_RELEASE_NOTES_v0.4.0.md`, upload `pregnancy-copilot-skill-v0.4.0.zip`, and verify the downloaded SHA256.

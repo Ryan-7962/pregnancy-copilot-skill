@@ -7,6 +7,7 @@ from pathlib import Path
 from pregnancy_copilot.adapters.feishu_mock import MockFeishuAdapter
 from pregnancy_copilot.event_processor import process_feishu_event
 from pregnancy_copilot.host_runtime import build_install_onboarding_action
+from pregnancy_copilot.daily_consolidation import consolidate_day
 from pregnancy_copilot.storage import PregnancyDataStore
 try:
     from scripts.init_data_dir import initialize_data_dir
@@ -45,8 +46,25 @@ def run_install_check(data_root: str | Path) -> dict:
         channel="agent_default",
         conversation_id="pregnancy-window",
     )
+    consolidation = consolidate_day(store, date)
+    onboarding_state = root / "memory" / "onboarding_state.yaml"
+    prenatal_plan = root / "memory" / "prenatal_plan.yaml"
+    daily_index = consolidation.index_path
     return {
-        "ok": all(path.exists() for path in [raw_message, events, current_context, medical_timeline, emotional_pattern, daily_log])
+        "ok": all(
+            path.exists()
+            for path in [
+                raw_message,
+                events,
+                current_context,
+                medical_timeline,
+                emotional_pattern,
+                daily_log,
+                onboarding_state,
+                prenatal_plan,
+                daily_index,
+            ]
+        )
         and bool(adapter.sent_replies),
         "risk_level": event["risk_level"],
         "raw_message": raw_message.as_posix(),
@@ -55,6 +73,9 @@ def run_install_check(data_root: str | Path) -> dict:
         "medical_timeline": medical_timeline.as_posix(),
         "emotional_pattern": emotional_pattern.as_posix(),
         "daily_log": daily_log.as_posix(),
+        "onboarding_state": onboarding_state.as_posix(),
+        "prenatal_plan": prenatal_plan.as_posix(),
+        "daily_index": daily_index.as_posix(),
         "reply": adapter.sent_replies[-1][1] if adapter.sent_replies else "",
         "onboarding_action": onboarding_action,
     }

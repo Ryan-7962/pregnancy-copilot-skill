@@ -1,6 +1,6 @@
 # Message Intents and Conditional Triage
 
-v0.2.1 uses two layers: deterministic routing for explicit records/commands and host-LLM semantic classification for everything else in the configured pregnant-user entrypoint.
+v0.3.0 uses two layers: deterministic routing for explicit records/commands and host-LLM semantic classification for everything else in the configured pregnant-user entrypoint.
 
 The goal is to avoid medicalizing every pregnant-user chat message. Red/yellow/green triage is only shown when the message is about medical risk, symptoms, reports, medication, fetal movement, or similar pregnancy safety topics.
 

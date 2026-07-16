@@ -1,4 +1,4 @@
-# Architecture: Pregnancy Copilot Skill v0.2.1
+# Architecture: Pregnancy Copilot Skill v0.4.0
 
 ## 1. Product Boundary
 
@@ -25,6 +25,8 @@ Feishu, WeChat, Telegram, Slack, Discord, web UI, and the host's default chat ar
 6. One pregnancy identity maps to one independent data root.
 7. Original message IDs provide idempotency; concurrent writes cannot corrupt JSONL.
 8. No external field may escape the configured data root.
+9. External social content is untrusted and cannot update medical facts.
+10. Cookie and API-key values remain outside pregnancy-data and release artifacts.
 
 ## 3. Runtime Flow
 
@@ -53,7 +55,7 @@ An immediate deterministic red flag bypasses incomplete onboarding so urgent gui
 
 - accepts normalized channel messages;
 - enforces onboarding and identity binding;
-- returns `collect_profile` or `answer_with_context_package`;
+- returns non-blocking `collect_profile` only for proactive install welcome; incoming messages use `answer_with_context_package`;
 - preserves channel message/event IDs for idempotency.
 
 ### Semantic Contract
@@ -112,14 +114,26 @@ Only valid dated observations with sufficient source confidence can compete for 
 - deduplicates raw messages and events by original IDs;
 - uses atomic replacement for derived YAML/Markdown state.
 
+### External Content Audit
+
+`src/pregnancy_copilot/external_content/`
+
+- detects and canonicalizes allowlisted Xiaohongshu URLs before medical keyword routing;
+- parses isolated SSR state without evaluating JavaScript;
+- keeps signed media URLs ephemeral and exposes only local relative image paths to host vision;
+- stores capture/finalization history in append-only JSONL and a compact relevant-only memory index;
+- treats every source claim and embedded instruction as untrusted;
+- keeps `medical_fact_update=false` through preparation and finalization.
+
 ### Upgrade Safety
 
-`src/pregnancy_copilot/backup.py` and `src/pregnancy_copilot/migration_v021.py`
+`src/pregnancy_copilot/backup.py` and versioned migration modules
 
 - create non-overwriting local ZIP snapshots;
 - validate archive integrity and reject ZIP traversal;
 - restore into an empty directory for verification;
-- back up before v0.2.0 -> v0.2.1 migration;
+- back up before v0.2.1 -> v0.3.0 migration;
+- back up before v0.3.0 -> v0.4.0 migration;
 - never delete append-only source records.
 
 ## 5. Data Ownership
@@ -128,7 +142,7 @@ Local `pregnancy-data/` is the source of truth. Channel providers, host-model pr
 
 Generated Feishu documents, spreadsheets, summaries, or exports are views, not the primary medical record.
 
-## 6. Non-Goals For v0.2.1
+## 6. Non-Goals For v0.4.0
 
 - standalone consumer app;
 - autonomous diagnosis, prescription, or emergency judgment;
@@ -136,3 +150,14 @@ Generated Feishu documents, spreadsheets, summaries, or exports are views, not t
 - mandatory Feishu/WeChat integration;
 - automatic partner access;
 - OCR that silently promotes extracted values to confirmed medical facts.
+- bypassing Xiaohongshu authentication or anti-abuse controls;
+- arbitrary social-platform scraping or automatic trust in social claims.
+
+## 7. v0.4.0 Operational Layers
+
+- `memory/onboarding_state.yaml` stores tutorial progress and operational preferences; it is separate from medical facts.
+- `memory/daily_conversation_index.yaml` is a rebuildable per-day coverage index. It references raw sources without promoting chat to medical truth.
+- `memory/prenatal_plan.yaml` stores explicit or suggested plan items, schedule history, and reminder delivery state.
+- `scripts/run_daily_consolidation.py` and `scripts/run_due_reminders.py` are scheduler-facing entrypoints. The host Agent or operating system owns scheduling and message delivery.
+- Reminder actions target `host_default_channel`; no core module depends on Feishu, WeChat, or another specific gateway.
+- `external_sources/index.jsonl` and `memory/external_content_index.md` preserve unverified external-source history without entering current medical state.

@@ -1,0 +1,22 @@
+schema_version: "0.1"
+pregnancy_mode: pending
+tutorial_status: in_progress
+interaction_count: 0
+completed_topics: []
+pending_topics:
+  - welcome_and_scope
+  - minimum_profile
+  - medical_truth
+  - memory_and_privacy
+  - records_and_controls
+  - daily_and_calendar
+  - external_content_audit
+last_prompted_topic: null
+last_prompted_at: null
+tutorial_dismissed: false
+preferences:
+  daily_summary_enabled: true
+  prenatal_reminders_enabled: false
+  reminder_lead_days: 1
+  xhs_video_transcription: ask
+  external_media_retention: false

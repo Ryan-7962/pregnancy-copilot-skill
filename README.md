@@ -1,10 +1,10 @@
 # Pregnancy Copilot Skill
 
-> Version: v0.2.1
-> Date: 2026-07-15
+> Version: v0.4.0
+> Date: 2026-07-16
 > Status: Public Alpha, available for external testing and community feedback
 
-![Pregnancy Copilot Skill infographic](assets/pregnancy-copilot-infographic.png)
+![Pregnancy Copilot Skill infographic](assets/pregnancy-copilot-infographic-v040.png)
 
 ## 中文介绍
 
@@ -41,12 +41,13 @@ Pregnancy Copilot Skill 就是基于这些真实使用习惯和痛点整理出�
 
 Pregnancy Copilot Skill 想解决的是这个长期问题：让 AI 不再失忆、不再混淆旧报告和新报告，并把每一次有价值的孕期对话沉淀成可迁移、可复盘、可继续使用的本地档案。
 
-## v0.2.1 目前能做什么
+## v0.4.0 目前能做什么
 
-v0.2.1 是可公开测试的 Agent Skill Public Alpha，不是完整消费级 App。当前已经实现并有测试覆盖的能力包括：
+v0.4.0 是可公开测试的 Agent Skill Public Alpha，不是完整消费级 App。当前已经实现并有测试覆盖的能力包括：
 
 - 初始化本地 `pregnancy-data/` 目录和 `profile.yaml`。
-- 渐进式首次建档：支持 LMP、EDD、身体数据、既往史、用药、过敏、医嘱和产检信息分多轮补充；未知字段不阻断问答。
+- 回答优先的自适应首次引导：不限定五轮，不用长问卷阻断问题；每次最多附加一个简短教程主题，支持跳过和恢复。
+- 渐进式建档：支持 LMP、EDD、身体数据、既往史、用药、过敏、医嘱和产检信息分多轮补充；未知字段不阻断问答。
 - 根据 LMP/EDD 按日期动态计算孕周，避免长期使用过期的静态孕周。
 - 保存聊天原文到 `inbox/`，把孕期相关内容写入 `events.jsonl`。
 - 生成 `memory/current_context.md`，供宿主 Agent 回答时读取。
@@ -55,11 +56,17 @@ v0.2.1 是可公开测试的 Agent Skill Public Alpha，不是完整消费级 Ap
 - 孕妇专属入口中的消息默认向宿主 LLM 提供最小孕期上下文；只有医学相关消息才显示红/黄/绿，普通闲聊不写医疗事件。
 - 宿主 LLM 负责语义判断；Skill 只保留少量明确红旗作为模型不可用时的安全下限。
 - 消息 ID 幂等、进程级写入锁、原子派生文件、路径边界校验和多孕妇身份隔离。
-- 升级前备份、ZIP 安全校验、恢复测试和 v0.2.0 -> v0.2.1 迁移命令。
+- 支持“这条不记录”，使当前消息不落 inbox、事件或医学事实。
+- 每日归并命令会生成日志与 `memory/daily_conversation_index.yaml`；宿主 LLM 摘要明确标成 `ai_organized`，不会更新医学事实。
+- 本地产检计划、改期历史、D-1 等提前提醒动作，以及产检前问题/SOP 和检查后行动闭环。
+- 升级前备份、ZIP 安全校验、恢复测试和 v0.2.1 -> v0.3.0 迁移命令。
 - 生成下次产检问题清单、产检前问诊 SOP、检查后行动 SOP、日常日志、宝宝周记素材和可选伴侣 summary。
 - 提供 Host Runtime，便于 Hermes/OpenClaw/Codex/Claude Code 等宿主 Agent 调用。
 - 提供飞书/Lark CLI 适配器和确定性 runtime worker，方便当前版本测试真实聊天通道。
 - 提供公开合成案例测试，不包含真实隐私数据。
+- 可把小红书链接路由为独立的外部内容审计：提取可用正文和元数据，把图片交给宿主 Agent 视觉/OCR，并可在用户许可后对视频做可选 ASR。
+- 小红书帖子、OCR 和转写始终标记为 `social_media_unverified`；它们不会写入当前医学状态、用药、医嘱或已确认报告事实。
+- 外部内容按来源生成本地 Markdown、append-only JSONL 历史和相关性索引；“这条不记录”不产生持久化外部内容，媒体识别后默认删除。
 
 欢迎试用、提 issue、给反馈，尤其是这些方向：不同宿主 Agent 的接入方式、微信/其他聊天通道实践、报告录入体验、孕期记忆结构、隐私部署方案和非技术用户安装流程。
 
@@ -72,16 +79,16 @@ v0.2.1 是可公开测试的 Agent Skill Public Alpha，不是完整消费级 Ap
 - **24 小时待命的家庭 Agent 能力**：只要宿主 Agent 和聊天通道在线，孕妇可以随时提问；skill 会提供长期记忆和安全边界。
 - **医学数据有新旧关系**：同一指标更新时，新值成为当前事实，旧值保留为历史趋势和审计线索，避免 AI 一直引用过期异常值。
 - **把零散对话变成可复盘档案**：原文保存在 `inbox/`，结构化事件进入 `events.jsonl`，当前上下文、医学状态、日常指标和日志自动生成。
+- **把碎片化帖子变成可审计材料**：转发小红书链接后，Agent 会区分帖子原话、个人经验、商业信号、证据缺口和与你当前情况的适用性，而不是把热帖直接当医学结论。
 - **产检前问题清单**：当前版本已支持把需要问医生的问题沉淀到 doctor questions，帮助下次产检前整理重点。
 - **家庭记忆素材**：当前版本已支持日常日志、宝宝周记素材、可选伴侣 summary 和爸爸日记等基础产物。
 
 ## 接下来希望补齐的方向
 
-这些是项目方向，不是 v0.2.1 已完整实现的承诺。欢迎试用者一起提 issue 或 PR：
+这些是项目方向，不是 v0.4.0 已完整实现的承诺。欢迎试用者一起提 issue 或 PR：
 
-- **产检日历与提醒**：根据孕周和医院流程生成检查日历，提醒下一次产检、糖耐、B 超、复查、用药等事项。
-- **更强产检 SOP**：当前已有基础 Markdown 生成；后续希望接入日历、提醒、医生问题状态流转和报告结构化更新。
-- **更强报告录入**：支持更稳定的 OCR/报告结构化，把 B 超、血常规、尿检、糖耐等报告转成可更新的医学状态。
+- **更强产检模板**：在现有本地预约和提醒动作上，增加有来源、可本地化的医院/地区流程建议；建议项不会自动变成真实预约。
+- **更强报告录入**：外部帖子图片已有宿主视觉接口；正式产检报告仍需要更稳定的专用 OCR/结构化复核流程，才能写入医学状态。
 - **更多聊天通道**：在飞书/Lark 之外，探索微信、Telegram、Slack、Discord、Web UI 或宿主 Agent 默认聊天入口。
 - **更低门槛安装**：减少技术用户配置成本，让普通家庭更容易使用。
 
@@ -99,7 +106,7 @@ The core problem is not one-off pregnancy Q&A. Many general LLMs can answer simp
 - switching models, accounts, or chat channels can break continuity;
 - pregnancy data is sensitive health data and should be controlled by the family by default.
 
-v0.2.1 can initialize a local `pregnancy-data/` folder, run progressive onboarding, derive gestational age from LMP/EDD, preserve raw messages and append-only events, separate current medical facts from history and pending candidates, isolate multiple pregnancy identities, and build a host-LLM context package. Red/yellow/green labels are requested only for medically relevant messages; ordinary chat keeps minimal context without becoming a medical event. The deterministic rules are a small red-flag fallback, not the primary medical reasoning engine.
+v0.4.0 adds an optional Xiaohongshu audit workflow on top of answer-first onboarding, local longitudinal memory, a source-aware prenatal plan, and reminder actions. Available post text and metadata are parsed locally; images are handed to host vision/OCR; video ASR is optional and consent-aware. Every social claim remains unverified and cannot update medical facts. The host Agent or operating system must schedule daily and reminder commands; the Skill does not claim to run continuously by itself.
 
 Feishu/Lark CLI remains the most tested optional channel adapter, but it is not the product boundary. The configured host Agent channel is the default integration point. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and other host-Agent channels.
 
@@ -143,9 +150,9 @@ Feishu/Lark CLI remains the most tested optional channel adapter, but it is not 
 7. **Artifacts matter**  
    AI 不只是回答问题，还要把孕期数据变成家庭回忆作品。
 
-## v0.2.1 默认部署
+## v0.4.0 默认部署
 
-首次安装后，宿主 Agent 应主动发起孕期建档；如果宿主不支持主动消息，用户的第一条消息会触发同一建档流程。建档会询问当前孕周或 LMP/预产期、身体与既往背景、用药和过敏、医生医嘱、当前关注项，以及已有产检报告。用户可以一次发完，也可以分多轮补充；没有的数据明确保留为未知，所有医学数值、单位、日期和医生结论应以原始报告为准。
+首次安装后，宿主 Agent 可以主动发送简短欢迎和最小建档问题；如果不能主动发消息，第一条用户消息也会进入同一流程。运行时始终先回答当前问题，再按状态附加最多一个简短引导，不固定五轮。用户可以一次发完档案，也可以长期渐进补充；没有的数据明确保留为未知。
 
 `pregnancy-data/` 中的结构化档案和长期记忆由用户本地持有，Skill 不会自行上传或分享。需要注意：用户选择的飞书、微信等聊天通道以及 Hermes/OpenClaw 背后的模型服务仍可能处理消息内容，其隐私边界由相应平台、部署方式和模型配置决定。
 
@@ -170,7 +177,7 @@ Feishu/Lark CLI remains the most tested optional channel adapter, but it is not 
 
 注意：飞书机器人本身不会自动回复。推荐让 Hermes/OpenClaw 接收孕妇侧窗口/机器人消息后调用 `pregnancy_copilot.host_runtime.process_host_message`。如果不走 host runtime，则必须有 `scripts/run_feishu_event_loop.py` 常驻运行。P2P smoke test 只证明“临时 event loop 启动时能跑通”，不代表机器人已经 24/7 连接到 Hermes。
 
-v0.1.7 起增加首次建档门禁：如果 `profile.yaml` 仍是模板或缺关键孕期锚点，非红色急症消息只保存 inbox 原文，并要求用户先提供基础档案/最近报告，不写入正式医疗事件，也不展示红黄绿判断。收到明确“建档信息”后，会更新 `profile.yaml`，并把 NT、CRL、胎心、胎盘位置等初始报告摘录写入 `events/medical_observations.jsonl`。若宿主 Agent 对 skill 提示遵循不稳定，可用 `scripts/run_feishu_runtime_worker.py` 做确定性飞书测试：它会直接调用 runtime 并把 `reply_text` 原样发回。
+v0.4.0 不设首次建档门禁。档案不完整时，宿主仍应基于已知内容回答并明确未知信息；症状、报告和明确孕期记录可保存为带来源事件，普通闲聊只保留原文而不进入医学事件。教程进度保存在 `memory/onboarding_state.yaml`，与医疗事实分离。
 
 v0.1.8 增加产检前/后 SOP 基础闭环：产检前可把当前医学状态、近期日常指标、近期风险事件和待问医生问题整理成 `reports/visit_sops/pre_visit_YYYY-MM-DD.md`；检查后可把医生原文保存到 `reports/doctor_visit_notes/`，并生成 `reports/visit_sops/post_visit_YYYY-MM-DD.md`。这只是归档和拆解工具，不替代医生判断，也不会自动把医生回复改写成新的医学指标；新指标仍需通过结构化 observation 写入。
 
@@ -230,6 +237,34 @@ PYTHONPATH=src .venv/bin/python scripts/check_profile_readiness.py \
 
 如果输出 `status=needs_review`，通过首次建档提供 LMP、EDD 或当前孕周之一。新模板中不再包含仿真孕周、医院或医学关注项。
 
+### 可选：小红书内容审计
+
+孕妇可以把拿不准、想讨论或想留存的小红书链接直接发给自己的 Agent。链接仍走当前默认聊天通道，不绑定飞书。
+
+小红书可能要求登录态。技术安装者只能在本机私密终端配置 Cookie，不能让孕妇把 Cookie 发到聊天窗口：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/setup_xiaohongshu_credentials.py \
+  --pregnancy-data-root ./pregnancy-data
+
+export PREGNANCY_COPILOT_XHS_COOKIE_FILE="$HOME/.config/pregnancy-copilot/secrets/xiaohongshu_cookie.txt"
+```
+
+Cookie 文件默认位于 `pregnancy-data/` 之外且权限为 `0600`。Skill 不会自动读取浏览器 Cookie 数据库，也不会把 Cookie 值写入聊天、记忆、日志或发布包。
+
+手工准备一条链接供宿主 Agent 分析：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/prepare_external_content.py \
+  --data-root ./pregnancy-data \
+  --url '<从小红书复制并原样转发的分享链接>' \
+  --question '这条建议适合我吗？'
+```
+
+必须保留分享链接原有参数或短链，不要手工拼帖子 ID，也不要删除 `xsec_token`。该临时参数只用于请求，不会写入本地 canonical URL、索引或日志。
+
+图片使用宿主 Agent 自带视觉能力，不额外绑定 OCR 服务。视频默认先询问；可选硅基流动 ASR 需要 `ffmpeg` 和 `SILICONFLOW_API_KEY`，音频会发送到该服务，因此不属于纯本地处理。第三方价格和免费政策可能变化。
+
 跑测试：
 
 ```bash
@@ -288,7 +323,7 @@ PYTHONPATH=src .venv/bin/python scripts/run_feishu_p2p_smoke_test.py \
 
 发布到 GitHub 前，先阅读 `docs/GITHUB_RELEASE.md`。不要从本地 handoff 目录直接发布；应先构建干净 release 目录并通过 `scripts/release_check.py`。
 公开安装指南见 `INSTALL.md`。
-v0.2.1 发布说明见 `docs/PUBLIC_RELEASE_NOTES_v0.2.1.md`。历史版本说明保留在 `docs/PUBLIC_RELEASE_NOTES_v0.2.0.md`。
+v0.4.0 发布说明见 `docs/PUBLIC_RELEASE_NOTES_v0.4.0.md`。历史版本说明保留在 `docs/PUBLIC_RELEASE_NOTES_v0.3.0.md`。
 记忆系统说明见 `docs/MEMORY_SYSTEM.md`。
 隐私与角色模型见 `docs/PRIVACY_AND_ROLES.md`。
 当前完成度与缺口见 `docs/V0_1_STATUS_AND_GAPS.md`。
@@ -316,7 +351,7 @@ PYTHONPATH=src .venv/bin/python scripts/record_medical_observation.py \
   --json '{"metric_key":"placenta_position","display_name":"胎盘位置","value":"宫底后壁","measured_at":"2026-05-08","status":"resolved","interpretation":"旧 23mm 状态已被刷新，当前胎盘低置警报解除。"}'
 ```
 
-运行 v0.2.1 孕妇单用户默认路径验收：
+运行孕妇单用户默认路径验收：
 
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/run_single_user_acceptance.py \
@@ -333,6 +368,18 @@ PYTHONPATH=src .venv/bin/python scripts/run_host_runtime_acceptance.py \
 ```
 
 该脚本验证宿主 Agent 合约：所有有效消息都可向宿主提供 `context_package`，日常记录不显示红绿灯，最新有效医学指标优先于旧值，并写入对应的 inbox/events/current context/current medical state。
+
+每日整理与产检提醒由宿主 Agent 或操作系统定时调用：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/run_daily_consolidation.py \
+  --data-root ./pregnancy-data
+
+PYTHONPATH=src .venv/bin/python scripts/run_due_reminders.py \
+  --data-root ./pregnancy-data
+```
+
+提醒命令返回 `host_default_channel` 动作，由宿主通过当前默认聊天通道发送；Skill 不会在安装后自行创建常驻任务。
 
 运行宿主默认通道验收：
 
@@ -389,18 +436,27 @@ PYTHONPATH=src .venv/bin/python scripts/process_channel_message.py \
   --json '{"channel":"agent_default","chat_id":"pregnancy-a-chat","sender_id":"pregnant-user-a","text":"建档：LMP 2026-05-01"}'
 ```
 
-v0.2.0 用户升级前先执行：
+v0.2.1 用户升级前先执行：
 
 ```bash
-PYTHONPATH=src .venv/bin/python scripts/upgrade_to_v021.py \
+PYTHONPATH=src .venv/bin/python scripts/upgrade_to_v030.py \
   --data-root ./pregnancy-data
 ```
+
+v0.3.0 用户升级到 v0.4.0：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/upgrade_to_v040.py \
+  --data-root ./pregnancy-data
+```
+
+升级命令先创建并验证本地 ZIP 备份，再初始化外部内容目录、索引和偏好；不会改写已有 inbox、事件或医学观察历史。
 
 该脚本只做通道字段归一化，不做飞书业务判断。宿主 Agent 可把任意默认聊天入口消息转成 JSON 后统一送入 Host Runtime。微信、飞书和其他通道都应保持为可替换网关，不作为 skill 的产品边界。
 
 ## 继续开发
 
-新的开发 Agent 应先阅读 `SKILL.md`、`docs/ARCHITECTURE.md`、`docs/DATA_SCHEMA.md`、`docs/SAFETY_RULES.md`、`docs/HOST_AGENT_RUNTIME.md` 和 `docs/TASKS.md`，再运行全量测试。当前代码已经是 v0.2.1 Public Alpha；请基于现有实现增量修改，不要按早期 v0.1 交接提示重新搭建骨架。
+新的开发 Agent 应先阅读 `SKILL.md`、`docs/ARCHITECTURE.md`、`docs/DATA_SCHEMA.md`、`docs/SAFETY_RULES.md`、`docs/HOST_AGENT_RUNTIME.md` 和 `docs/TASKS.md`，再运行全量测试。当前代码目标是 v0.4.0 Public Alpha；请基于现有实现增量修改。
 
 ## 私有文件提醒
 

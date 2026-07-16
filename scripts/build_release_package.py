@@ -19,9 +19,20 @@ EXCLUDED_DIRS = {
     "pregnancy-data",
     "docs/private",
     "docs/superpowers",
+    "docs/xiaohongshu",
     "__pycache__",
+    "build",
+    "dist",
 }
-EXCLUDED_NAMES = {".DS_Store", ".env", ".env.local", ".releaseignore.local", "PRIVATE_NOTES.md"}
+EXCLUDED_NAMES = {
+    ".DS_Store",
+    ".env",
+    ".env.local",
+    ".releaseignore.local",
+    "PRIVATE_NOTES.md",
+    "xiaohongshu_cookie.txt",
+    "xhs_cookie.txt",
+}
 EXCLUDED_PATHS = {"docs/JIMMY_BLACKBOX_TEST_REPORT.md", "docs/HOST_CHANNEL_BLACKBOX_TEST_REPORT.md"}
 EXCLUDED_SUFFIXES = {".zip", ".pyc", ".key", ".pem", ".diff"}
 
@@ -69,13 +80,16 @@ def load_local_release_ignores(source_root: Path) -> set[str]:
 
 def should_exclude(path: Path, rel: str, excluded_dirs: set[str] | None = None) -> bool:
     excluded_dirs = excluded_dirs or EXCLUDED_DIRS
+    parts = Path(rel).parts
     if any(rel == dirname or rel.startswith(f"{dirname}/") for dirname in excluded_dirs):
         return True
     if rel in EXCLUDED_PATHS:
         return True
-    if any(part in excluded_dirs for part in Path(rel).parts):
+    if any(part in excluded_dirs or part.endswith(".egg-info") for part in parts):
         return True
     if path.is_dir() and path.name in excluded_dirs:
+        return True
+    if path.is_dir() and path.name.endswith(".egg-info"):
         return True
     if path.name in EXCLUDED_NAMES:
         return True

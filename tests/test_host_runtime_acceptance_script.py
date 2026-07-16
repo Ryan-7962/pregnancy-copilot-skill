@@ -12,7 +12,7 @@ def test_host_runtime_acceptance_covers_host_contract(tmp_path):
     assert result["checks"]["old_medical_state_superseded"] is True
     assert result["checks"]["report_question_context_uses_current_state"] is True
     assert result["checks"]["general_chat_host_action_uses_context"] is True
-    assert result["checks"]["fresh_profile_triggers_onboarding"] is True
+    assert result["checks"]["fresh_profile_uses_answer_first_onboarding"] is True
     assert result["host_contract"]["general_chat"]["handled"] is True
     assert result["host_contract"]["general_chat"]["host_action_type"] == "answer_with_context_package"
     assert result["host_contract"]["daily_log"]["risk_level"] == "not_applicable"

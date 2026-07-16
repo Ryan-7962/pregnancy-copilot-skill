@@ -38,7 +38,7 @@ Recommended isolation boundaries:
 - separate backups,
 - explicit export/share flow for partner summaries.
 
-v0.2.1 enforces one pregnancy identity per data root. For a multi-user host, a trusted host configuration supplies `pregnancy_id`; each identity receives an independent `identities/<pregnancy_id>/` root. New endpoints cannot claim an existing identity without explicit binding.
+v0.3.0 enforces one pregnancy identity per data root. For a multi-user host, a trusted host configuration supplies `pregnancy_id`; each identity receives an independent `identities/<pregnancy_id>/` root. New endpoints cannot claim an existing identity without explicit binding.
 
 ## Open-Source Warning
 

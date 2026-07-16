@@ -1,4 +1,4 @@
-# Pregnancy Copilot Skill v0.2.1 Install Guide
+# Pregnancy Copilot Skill v0.4.0 Install Guide
 
 This guide is for public testers who receive the zip package or clone the GitHub repository.
 
@@ -47,7 +47,7 @@ PYTHONPATH=src .venv/bin/python scripts/run_single_user_acceptance.py \
 
 Expected: output contains `"ok": true`.
 
-This check proves the default v0.2.1 path after profile onboarding:
+This check proves the default v0.4.0 path:
 
 - normal chat receives the minimal pregnancy context without triage or a medical event;
 - pregnancy symptom messages return a host `context_package`;
@@ -66,7 +66,7 @@ Expected: output contains `"ok": true`.
 
 This check proves the Hermes/OpenClaw-style host contract:
 
-- a fresh profile triggers onboarding on the first incoming message;
+- a fresh profile gets answer-first adaptive onboarding without blocking its question;
 - ordinary chat returns `answer_with_context_package` but does not require a risk label or medical-state write;
 - pregnancy symptom messages return `context_package`;
 - daily logs are stored without visible red/yellow/green triage;
@@ -87,7 +87,7 @@ Edit:
 pregnancy-data/memory/profile.yaml
 ```
 
-The recommended path is progressive onboarding through the host Agent. LMP, EDD, or a dated gestational age is the only blocking anchor; other unavailable fields remain unknown and can be added later.
+The recommended path is progressive onboarding through the host Agent. LMP, EDD, or a dated gestational age activates accurate pregnancy-time context; missing fields remain unknown and do not block questions.
 
 Do not commit `pregnancy-data/`. It is personal medical memory.
 
@@ -98,7 +98,7 @@ PYTHONPATH=src .venv/bin/python scripts/check_profile_readiness.py \
   --data-root ./pregnancy-data
 ```
 
-If it returns `status=needs_review`, provide LMP, EDD, or a dated current gestational age. The v0.2.1 template contains no realistic hospital, gestational-age, or medical-focus examples.
+If it returns `status=needs_review`, provide LMP, EDD, or a dated current gestational age. The template contains no realistic hospital, gestational-age, or medical-focus examples.
 
 ### Required first-run message
 
@@ -115,7 +115,7 @@ action = build_install_onboarding_action(
 # Send action["reply_text"] through the host Agent's configured channel.
 ```
 
-If the host does not support proactive messages, no extra integration is required: before the profile is ready, `process_host_message(...)` converts the first incoming message into `host_action.type=collect_profile`, including ordinary chat.
+If the host does not support proactive messages, no extra integration is required: the first incoming message returns `answer_with_context_package`, answers the question first, and includes one optional `tutorial_nudge`.
 
 The message explains the actual privacy boundary: structured memory remains under the local `pregnancy-data/` directory and the Skill does not independently upload it, while the selected chat platform and host model may still process the messages. Users should copy medical values, units, dates, and doctor conclusions from original reports; unknown information stays unknown.
 
@@ -149,13 +149,29 @@ The JSON output includes:
 
 Recommended host behavior:
 
-- If `host_action.type=collect_profile`, send `reply_text` as-is. Do not answer the symptom/report yet unless it is an immediate red-flag emergency.
+- If the install action uses `collect_profile`, send its concise welcome; it is marked `blocking=false`.
 - If `host_action.type=answer_with_context_package`, first classify semantic medical relevance with the host LLM, then answer using `context_package`. Ordinary chat receives no risk label and no medical-state write.
 - Prefer `current_medical_state.metrics.*.current` over older event history.
 - Write new report/lab values through `scripts/record_medical_observation.py`.
-- On a fresh profile, do not bypass `collect_profile` with the host Agent's general answer path.
+- On a fresh profile, use `profile_readiness`, `onboarding`, and `tutorial_nudge`; answer first and state missing facts as unknown.
 
 See `docs/HOST_AGENT_RUNTIME.md`.
+
+### Optional Xiaohongshu audit
+
+The same pregnant-user channel can forward Xiaohongshu links. The runtime returns `host_action.type=analyze_external_content` before medical keyword routing.
+
+If Xiaohongshu requires login, configure the Cookie only in a private terminal:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/setup_xiaohongshu_credentials.py \
+  --pregnancy-data-root ./pregnancy-data
+export PREGNANCY_COPILOT_XHS_COOKIE_FILE="$HOME/.config/pregnancy-copilot/secrets/xiaohongshu_cookie.txt"
+```
+
+Do not paste Cookie values into an Agent chat, Feishu, WeChat, GitHub, or documentation. The setup command stores a `0600` secret outside `pregnancy-data/`.
+
+The host then runs `scripts/prepare_external_content.py`, analyzes returned relative `vision_inputs`, and submits structured OCR/audit output through `scripts/finalize_external_content.py`. External claims always remain `social_media_unverified` and cannot update medical facts.
 
 For channels that already produce JSON, use the generic channel bridge:
 
@@ -258,7 +274,7 @@ The host model should use medical sources and local clinical guidance when givin
 
 ## 8. Privacy Boundary
 
-Default v0.2.1 is pregnant-user-first:
+Default v0.4.0 is pregnant-user-first:
 
 - The pregnant user owns the data.
 - A technical partner may install the skill and channel, but partner access is not automatic consent.
@@ -281,7 +297,7 @@ Before changing versions or running migrations:
 ```bash
 PYTHONPATH=src .venv/bin/python scripts/create_upgrade_backup.py \
   --data-root ./pregnancy-data \
-  --target-version v0.2.1
+  --target-version v0.4.0
 ```
 
 Backups are written under:
@@ -297,4 +313,17 @@ PYTHONPATH=src .venv/bin/python scripts/upgrade_to_v021.py \
   --data-root ./pregnancy-data
 ```
 
-The command creates and verifies a backup before changing derived state. It clears old demo values only when the entire unedited v0.2.0 template matches; partially customized profiles are preserved and listed for manual review.
+Upgrade v0.2.1 data with `scripts/upgrade_to_v030.py`. The command creates and verifies a backup, initializes new onboarding/calendar/index files, and does not rewrite append-only inbox or event history.
+
+Upgrade v0.3.0 data with `scripts/upgrade_to_v040.py`. It creates and verifies a backup before adding external-source directories, derived indexes, and optional preferences; append-only inbox, event, and medical-observation histories are not rewritten.
+
+## 10. Schedule Daily Memory And Reminders
+
+Run once per day from the host Agent or operating-system scheduler:
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/run_daily_consolidation.py --data-root ./pregnancy-data
+PYTHONPATH=src .venv/bin/python scripts/run_due_reminders.py --data-root ./pregnancy-data
+```
+
+`run_due_reminders.py` returns channel-neutral JSON actions. The host must send each action through its own configured channel. The Skill does not start a permanent scheduler during installation.

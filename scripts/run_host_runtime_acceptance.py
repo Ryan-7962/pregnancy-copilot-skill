@@ -117,11 +117,12 @@ def run_host_runtime_acceptance(
         "general_chat_host_action_uses_context": general.host_action.get("type") == "answer_with_context_package"
         and general.host_action.get("send_reply") is True
         and general.host_action.get("use_context_package") is True,
-        "fresh_profile_triggers_onboarding": general_only.handled is True
-        and general_only.intent == "profile_onboarding"
-        and general_only.host_action.get("type") == "collect_profile"
-        and "只保存在你指定的本地 pregnancy-data 目录" in general_only.reply_text
-        and "请按产检报告原文录入" in general_only.reply_text
+        "fresh_profile_uses_answer_first_onboarding": general_only.handled is True
+        and general_only.intent == "pregnancy_context"
+        and general_only.host_action.get("type") == "answer_with_context_package"
+        and general_only.host_action.get("answer_first") is True
+        and general_only.context_package.get("tutorial_nudge", {}).get("topic") == "welcome_and_scope"
+        and general_only.context_package.get("profile_readiness", {}).get("status") == "needs_review"
         and not (general_only_root / "events" / "events.jsonl").exists()
         and (general_only_root / "memory" / "profile.yaml").exists()
         and (general_only_root / "inbox" / f"raw_{channel}_messages" / "2026-05-16.md").exists(),

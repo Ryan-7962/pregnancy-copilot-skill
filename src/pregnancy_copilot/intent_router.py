@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .external_content.xiaohongshu import extract_xiaohongshu_urls
+
 
 @dataclass(frozen=True)
 class IntentClassification:
@@ -71,6 +73,15 @@ def classify_intent(text: str) -> IntentClassification:
     normalized = " ".join(text.strip().split())
     if not normalized:
         return general_chat("空消息或无可记录内容。")
+
+    if extract_xiaohongshu_urls(normalized):
+        return IntentClassification(
+            "external_content_audit",
+            True,
+            False,
+            False,
+            "包含可审计的小红书链接；外部内容仅作为未验证来源处理。",
+        )
 
     if contains_any(normalized, MEDICAL_TRIAGE_KEYWORDS):
         return IntentClassification("medical_triage", True, True, True, "包含症状或孕期不适线索。")

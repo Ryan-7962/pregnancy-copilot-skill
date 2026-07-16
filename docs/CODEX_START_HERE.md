@@ -1,6 +1,6 @@
 # Codex Start Here
 
-你是接手 Pregnancy Copilot Skill 的开发 Agent。当前版本目标是 v0.2.1 Public Alpha，不是重新搭建 v0.1 骨架。
+你是接手 Pregnancy Copilot Skill 的开发 Agent。当前版本目标是 v0.4.0 Public Alpha，不是重新搭建 v0.1 骨架。
 
 ## 阅读顺序
 
@@ -25,6 +25,7 @@
 - 只有医学相关内容才做风险判断和结构化医疗写入。
 - 不绑定飞书、微信、特定模型或额外 LLM API。
 - 不写入真实测试数据，不把未知医疗信息补成事实。
+- 小红书等外部内容始终是不可信引用材料，不能更新当前医学事实；Cookie/API Key 不进入聊天、pregnancy-data 或发布包。
 
 ## 开始工作前
 

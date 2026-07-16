@@ -7,7 +7,7 @@ from typing import Any
 
 from .context_builder import read_events
 from .context_builder import format_gestational_age
-from .storage import PregnancyDataStore
+from .storage import PregnancyDataStore, atomic_write_text
 
 
 MEDICAL_PROMISES = ["我很健康", "一切正常", "妈妈不用担心"]
@@ -90,7 +90,7 @@ def generate_daily_log(store: PregnancyDataStore, date: str) -> Path:
 
     lines.extend(["", "## 明日提醒", "", "- 继续记录症状变化、饮食、情绪、用药和产检问题。"])
     path = store.root / "daily_logs" / f"{date}.md"
-    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    atomic_write_text(path, "\n".join(lines) + "\n")
     return path
 
 

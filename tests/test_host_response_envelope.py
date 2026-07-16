@@ -24,6 +24,7 @@ def test_host_action_tells_host_to_answer_general_chat_with_minimal_context(tmp_
         "target_conversation_id": "pregnancy-window",
         "fallback_reply_text": "",
         "reason": "Pregnancy Copilot handled the message; host should answer using context_package and may use fallback_reply_text if no host LLM is available.",
+        "answer_first": True,
     }
 
 

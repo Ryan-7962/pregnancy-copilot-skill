@@ -14,6 +14,12 @@ def test_find_release_blockers_reports_private_files_and_ignores_common_local_ca
     (tmp_path / ".pytest_cache").mkdir()
     (tmp_path / "src" / "pkg" / "__pycache__").mkdir(parents=True)
     (tmp_path / "src" / "pkg" / "__pycache__" / "module.pyc").write_text("bytecode", encoding="utf-8")
+    (tmp_path / "build" / "lib").mkdir(parents=True)
+    (tmp_path / "build" / "lib" / "module.py").write_text("generated", encoding="utf-8")
+    (tmp_path / "dist").mkdir()
+    (tmp_path / "dist" / "package.whl").write_text("generated", encoding="utf-8")
+    (tmp_path / "src" / "demo.egg-info").mkdir()
+    (tmp_path / "src" / "demo.egg-info" / "PKG-INFO").write_text("generated", encoding="utf-8")
     (tmp_path / "real-export.zip").write_text("private zip", encoding="utf-8")
     (tmp_path / ".DS_Store").write_text("mac metadata", encoding="utf-8")
     (tmp_path / "._README.md").write_text("appledouble", encoding="utf-8")
@@ -32,6 +38,12 @@ def test_find_release_blockers_reports_private_files_and_ignores_common_local_ca
     assert ".pytest_cache/" not in blockers
     assert "src/pkg/__pycache__/" in blockers
     assert "src/pkg/__pycache__/module.pyc" not in blockers
+    assert "build/" in blockers
+    assert "build/lib/module.py" not in blockers
+    assert "dist/" in blockers
+    assert "dist/package.whl" not in blockers
+    assert "src/demo.egg-info/" in blockers
+    assert "src/demo.egg-info/PKG-INFO" not in blockers
     assert "real-export.zip" in blockers
     assert ".DS_Store" in blockers
     assert "._README.md" in blockers
@@ -67,3 +79,13 @@ def test_find_release_blockers_reports_local_paths_tokens_and_bot_ids(tmp_path):
     assert "LOCAL.md: contains private pattern" in blockers
     assert "TOKEN.md: contains private pattern" in blockers
     assert "BOT.md: contains private pattern" in blockers
+
+
+def test_find_release_blockers_reports_known_xiaohongshu_cookie_files(tmp_path):
+    (tmp_path / "xiaohongshu_cookie.txt").write_text("a1=secret", encoding="utf-8")
+    (tmp_path / "xhs_cookie.txt").write_text("web_session=secret", encoding="utf-8")
+
+    blockers = find_release_blockers(tmp_path)
+
+    assert "xiaohongshu_cookie.txt" in blockers
+    assert "xhs_cookie.txt" in blockers

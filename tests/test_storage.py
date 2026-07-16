@@ -53,6 +53,8 @@ def test_packaged_templates_exist_and_contain_no_demo_medical_facts():
         "emotional_pattern.md",
         "long_term_summary.md",
         "medical_timeline.md",
+        "onboarding_state.yaml",
+        "prenatal_plan.yaml",
         "preferences.yaml",
         "profile.yaml",
     }

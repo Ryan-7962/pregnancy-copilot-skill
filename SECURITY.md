@@ -9,6 +9,7 @@ Pregnancy Copilot Skill stores sensitive pregnancy and health context. Treat all
 - Gemini, ChatGPT, Feishu, WeChat, Kortex, NotebookLM, or Obsidian raw exports
 - screenshots containing names, avatars, locations, hospitals, account IDs, or medical identifiers
 - `.env`, app credentials, Feishu/Lark tokens, private keys, or OAuth artifacts
+- Xiaohongshu Cookie files, including `xiaohongshu_cookie.txt` and `xhs_cookie.txt`
 - release zips that were built from an unchecked source tree
 
 ## Public Test Data

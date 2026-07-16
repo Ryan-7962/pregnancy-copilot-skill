@@ -21,6 +21,8 @@ DATA_DIRS = [
     "feishu_docs",
     "exports",
     "backups",
+    "external_sources/raw",
+    "external_sources/media",
 ]
 
 def initialize_data_dir(target: str | Path) -> Path:

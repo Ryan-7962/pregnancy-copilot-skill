@@ -39,6 +39,8 @@ class PregnancyDataStore:
             "baby_diaries",
             "doctor_questions",
             "backups",
+            "external_sources/raw",
+            "external_sources/media",
         ]:
             (self.root / rel).mkdir(parents=True, exist_ok=True)
 

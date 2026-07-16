@@ -7,9 +7,17 @@ import re
 
 PRIVATE_DIRS = {"docs/private", "pregnancy-data", ".codex"}
 IGNORED_DIRS = {".pytest_cache", ".venv", "venv"}
-GENERATED_DIR_NAMES = {"__pycache__"}
+GENERATED_DIR_NAMES = {"__pycache__", "build", "dist"}
 PRIVATE_SUFFIXES = {".zip", ".key", ".pem"}
-PRIVATE_NAMES = {".DS_Store", ".env", ".env.local", ".releaseignore.local", "PRIVATE_NOTES.md"}
+PRIVATE_NAMES = {
+    ".DS_Store",
+    ".env",
+    ".env.local",
+    ".releaseignore.local",
+    "PRIVATE_NOTES.md",
+    "xiaohongshu_cookie.txt",
+    "xhs_cookie.txt",
+}
 PRIVATE_TEXT_MARKER_PARTS = {
     ("CONVERSATION", "_LOG"),
     ("PRIVATE_HISTORY", "_EXPORT"),
@@ -39,7 +47,7 @@ def scan_dir(root: Path, directory: Path, blockers: list[str]) -> None:
         if path.is_dir():
             if path.name in IGNORED_DIRS:
                 continue
-            if path.name in GENERATED_DIR_NAMES:
+            if path.name in GENERATED_DIR_NAMES or path.name.endswith(".egg-info"):
                 blockers.append(f"{rel}/")
                 continue
             if rel in PRIVATE_DIRS:

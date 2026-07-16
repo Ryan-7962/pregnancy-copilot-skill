@@ -20,19 +20,19 @@ def test_process_host_message_initializes_data_root_and_returns_reply(tmp_path):
         data_root=tmp_path,
     )
 
-    assert result.risk_level == "profile_needs_review"
-    assert result.mode == "onboarding"
+    assert result.risk_level == "green"
+    assert result.mode == "pregnancy_qa"
     assert result.event_id.startswith("host-")
-    assert "先完成孕期建档" in result.reply_text
-    assert "最近一次产检" in result.reply_text
+    assert result.host_action["answer_first"] is True
+    assert result.context_package["tutorial_nudge"]["topic"] == "welcome_and_scope"
     assert "W20+0" not in result.reply_text
     assert result.context_package is not None
     assert "W20+0" not in result.context_package["context_markdown"]
     assert (tmp_path / "memory" / "profile.yaml").exists()
-    assert not (tmp_path / "events" / "events.jsonl").exists()
+    assert (tmp_path / "events" / "events.jsonl").exists()
     assert (tmp_path / "inbox" / "raw_hermes_messages" / "2026-05-07.md").exists()
-    assert result.event is None
-    assert result.host_action["type"] == "collect_profile"
+    assert result.event["gestational_age"] == "unknown"
+    assert result.host_action["type"] == "answer_with_context_package"
 
 
 def test_install_onboarding_action_can_be_sent_proactively(tmp_path):
@@ -47,9 +47,10 @@ def test_install_onboarding_action_can_be_sent_proactively(tmp_path):
     assert action["send_reply"] is True
     assert action["target_channel"] == "agent_default"
     assert action["target_conversation_id"] == "pregnancy-window"
-    assert "我还不了解你的具体孕期情况" in action["reply_text"]
-    assert "只保存在你指定的本地 pregnancy-data 目录" in action["reply_text"]
-    assert "请按产检报告原文录入" in action["reply_text"]
+    assert "我是你的孕期助手" in action["reply_text"]
+    assert "宿主模型和聊天通道" in action["reply_text"]
+    assert "末次月经" in action["reply_text"]
+    assert action["blocking"] is False
 
 
 def test_process_host_message_accepts_profile_onboarding_intake(tmp_path):
@@ -224,7 +225,7 @@ def test_run_host_message_script_returns_json_ready_result(tmp_path):
     assert "reply_text" in result
 
 
-def test_host_runtime_uses_first_general_message_to_start_profile_onboarding(tmp_path):
+def test_host_runtime_uses_first_general_message_with_answer_first_onboarding(tmp_path):
     result = process_host_message(
         HostMessageRequest(
             text="明天天气怎么样，推荐一首歌",
@@ -238,12 +239,12 @@ def test_host_runtime_uses_first_general_message_to_start_profile_onboarding(tmp
     )
 
     assert result.handled is True
-    assert result.intent == "profile_onboarding"
-    assert result.mode == "onboarding"
-    assert result.host_action["type"] == "collect_profile"
-    assert "只保存在你指定的本地 pregnancy-data 目录" in result.reply_text
-    assert "请按产检报告原文录入" in result.reply_text
-    assert "不知道或没有的数据直接写“未知/未检查/暂未提供”" in result.reply_text
+    assert result.intent == "pregnancy_context"
+    assert result.mode == "pregnancy_context"
+    assert result.host_action["type"] == "answer_with_context_package"
+    assert result.host_action["answer_first"] is True
+    assert result.context_package["tutorial_nudge"]["topic"] == "welcome_and_scope"
+    assert result.context_package["profile_readiness"]["status"] == "needs_review"
     assert result.event is None
     assert not (tmp_path / "events" / "events.jsonl").exists()
     assert (tmp_path / "inbox" / "raw_hermes_messages" / "2026-05-07.md").exists()

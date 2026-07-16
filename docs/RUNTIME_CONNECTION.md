@@ -25,7 +25,8 @@ Do not accept `pregnancy_id` from the user message payload. The generic bridge t
 
 ## Actions
 
-- `collect_profile`: send the onboarding response and continue progressive intake.
+- `collect_profile`: proactive non-blocking install welcome only.
+- `answer_with_context_package`: all incoming pregnant-user messages, including incomplete profiles; answer first and append one tutorial nudge when present.
 - `answer_with_context_package`: let the host LLM classify semantic relevance and answer with local context.
 
 The configured pregnant-user entrypoint does not use keyword-based `pass_through` for valid messages. Ordinary chat still uses `answer_with_context_package`, but the host must omit medical triage and medical-state writes when semantic relevance is false.

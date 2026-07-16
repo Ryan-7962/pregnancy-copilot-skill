@@ -72,7 +72,7 @@ Pregnancy Copilot Skill 想解决的是这个长期问题。
 
 它不是医生，也不是医疗器械。它的目标是帮助孕妇和家庭更理性、更结构化地面对孕期焦虑：该记录的记录，该复查的复查，该问医生的问医生，普通焦虑则用更完整的上下文来解释。
 
-## 当前 v0.2.1 可以公开承诺的能力
+## 当前 v0.3.0 可以公开承诺的能力
 
 - 初始化本地 `pregnancy-data/` 目录和基础档案模板。
 - 保存原始聊天输入和结构化孕期事件。
@@ -118,7 +118,7 @@ It is not a standalone app, a medical device, or a replacement for obstetric car
 
 The core problem is not one-off pregnancy Q&A. The harder problem is long-running pregnancy context: medical values change, old report findings may be resolved, symptoms and daily notes are scattered, and switching models or chat channels can break continuity.
 
-v0.2.1 can initialize a local `pregnancy-data/` folder, guide truthful first-run onboarding, store raw messages and structured events, maintain current-versus-historical medical observations with provenance, build a context package for the host Agent, track daily metrics, apply conditional safety prompts only for medically relevant messages, and generate optional family-memory artifacts.
+v0.3.0 can provide answer-first adaptive onboarding, local pregnancy memory, current-versus-historical medical observations with provenance, daily consolidation, a compact conversation index, a source-aware prenatal plan, and channel-neutral reminder actions. Daily jobs and delivery still require the host Agent or operating-system scheduler.
 
 Feishu/Lark CLI is an available tested adapter, but it is not the product boundary. We welcome experiments and feedback for WeChat, Telegram, Slack, Discord, web UI, and host-Agent default chat channels.
 

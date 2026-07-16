@@ -1,4 +1,4 @@
-# Hermes / OpenClaw Quickstart v0.2.1
+# Hermes / OpenClaw Quickstart v0.3.0
 
 ## Install
 
@@ -9,7 +9,7 @@ python3.11 -m venv .venv
 PYTHONPATH=src .venv/bin/python scripts/init_data_dir.py --target ./pregnancy-data
 ```
 
-The installing Agent should proactively send `build_install_onboarding_action(...)`. If it cannot, the first incoming message returns `collect_profile`.
+The installing Agent should proactively send `build_install_onboarding_action(...)`. If it cannot, the first incoming message uses answer-first onboarding with one optional tutorial nudge.
 
 ## Connect The Existing Host LLM
 
@@ -18,8 +18,8 @@ For every valid message in the configured pregnant-user entrypoint:
 1. normalize channel fields into `HostMessageRequest`;
 2. preserve original message/event IDs;
 3. call `process_host_message`;
-4. send onboarding text for `collect_profile`;
-5. for `answer_with_context_package`, let the host LLM classify semantic medical relevance and draft the final answer;
+4. for `answer_with_context_package`, let the host LLM classify semantic relevance and answer with `context_package`;
+5. append `tutorial_nudge` after the main answer when present;
 6. show red/yellow/green only for medical relevance.
 
 No additional LLM API is required.
