@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-labelledby="title desc">
+  <title id="title">Pregnancy Copilot Skill</title>
+  <desc id="desc">A local-first, long-memory pregnancy assistant Skill that connects each conversation to current facts, history, and the next reply.</desc>
+
+  <rect width="1200" height="380" rx="24" fill="#071B2D"/>
+  <path d="M42 38H1158M42 342H1158" stroke="#183A50" stroke-width="1"/>
+
+  <g id="title-block" transform="translate(58 54)">
+    <text x="0" y="0" fill="#53C7BC" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" font-weight="700">LOCAL-FIRST · LONG-MEMORY · AGENT SKILL</text>
+    <text x="0" y="79" fill="#F7FBFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="66" font-weight="750">Pregnancy</text>
+    <text x="0" y="145" fill="#F7FBFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="66" font-weight="750">Copilot Skill</text>
+    <rect x="0" y="172" width="42" height="4" rx="2" fill="#FF7067"/>
+    <text x="0" y="218" fill="#F7FBFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="28" font-weight="650">让每一次孕期对话，都接得上上一次</text>
+    <text x="0" y="252" fill="#9EB7C5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18">Long-memory pregnancy assistance for the Agent you already use.</text>
+    <text x="0" y="292" fill="#6F93A7" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="15">v0.4.0  /  PUBLIC ALPHA  /  PYTHON 3.10+</text>
+  </g>
+
+  <g id="memory-flow" transform="translate(728 45)">
+    <path d="M58 62V116M58 208V262" stroke="#53C7BC" stroke-width="3" stroke-linecap="round"/>
+    <path d="M52 108L58 116L64 108M52 254L58 262L64 254" fill="none" stroke="#53C7BC" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <g id="conversation">
+      <rect x="0" y="0" width="286" height="62" rx="14" fill="#102E42" stroke="#2D566C"/>
+      <circle cx="31" cy="31" r="12" fill="#FF7067"/>
+      <text x="54" y="27" fill="#F7FBFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="17" font-weight="650">今天的新问题与新数据</text>
+      <text x="54" y="47" fill="#87A9BA" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">MESSAGE / REPORT / NOTE</text>
+    </g>
+
+    <g id="local-memory" transform="translate(0 116)">
+      <rect x="0" y="0" width="390" height="92" rx="16" fill="#F2F8F8"/>
+      <rect x="0" y="0" width="8" height="92" rx="4" fill="#53C7BC"/>
+      <text x="28" y="31" fill="#0A2638" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="20" font-weight="750">pregnancy-data / 本地记忆</text>
+      <g transform="translate(28 53)" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13" font-weight="650">
+        <rect x="0" y="0" width="92" height="24" rx="12" fill="#D9F1EE"/>
+        <text x="16" y="17" fill="#167C73">CURRENT</text>
+        <rect x="103" y="0" width="92" height="24" rx="12" fill="#E5EDF2"/>
+        <text x="120" y="17" fill="#476A7E">HISTORY</text>
+        <rect x="206" y="0" width="92" height="24" rx="12" fill="#FFE5E2"/>
+        <text x="224" y="17" fill="#B9433D">SOURCE</text>
+      </g>
+    </g>
+
+    <g id="next-reply" transform="translate(0 262)">
+      <rect x="0" y="0" width="336" height="62" rx="14" fill="#102E42" stroke="#2D566C"/>
+      <circle cx="31" cy="31" r="12" fill="#7FBE73"/>
+      <text x="54" y="27" fill="#F7FBFC" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, PingFang SC, sans-serif" font-size="17" font-weight="650">带着最新上下文继续回答</text>
+      <text x="54" y="47" fill="#87A9BA" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">CONTEXT PACKAGE → HOST LLM</text>
+    </g>
+  </g>
+</svg>
